@@ -8,10 +8,10 @@ namespace MurderGame;
 
 public enum Team : ushort
 {
-    Spectator = 0,
-    Murderer = 1,
-    Detective = 2,
-    Bystander = 3
+	Spectator = 0,
+	Murderer = 1,
+	Detective = 2,
+	Bystander = 3
 }
 
 // why are c# enums so bad

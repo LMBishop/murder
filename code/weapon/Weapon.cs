@@ -202,13 +202,13 @@ public partial class Weapon : AnimatedEntity
 		vm.Owner = Owner;
 		ViewModelEntity = vm;
 		if (!string.IsNullOrEmpty(HandsModelPath))
-        {
-            HandModelEntity = new BaseViewModel();
-            HandModelEntity.Owner = Owner;
-            HandModelEntity.EnableViewmodelRendering = true;
-            HandModelEntity.SetModel(HandsModelPath);
-            HandModelEntity.SetParent(ViewModelEntity, true);
-        }
+		{
+			HandModelEntity = new BaseViewModel();
+			HandModelEntity.Owner = Owner;
+			HandModelEntity.EnableViewmodelRendering = true;
+			HandModelEntity.SetModel(HandsModelPath);
+			HandModelEntity.SetParent(ViewModelEntity, true);
+		}
 	}
 
 	[ClientRpc]

@@ -27,7 +27,7 @@ public partial class DroppedWeapon : AnimatedEntity
 		if ( !Game.IsServer ) return;
 		if ( !other.Tags.Has( "livingplayer" ) ) return;
 
-        MurderGame.Player player = (MurderGame.Player)other;
+		MurderGame.Player player = (MurderGame.Player)other;
 
 		if ( player.Inventory == null || player.Inventory.PrimaryWeapon != null || !player.Inventory.AllowPickup) return;
 

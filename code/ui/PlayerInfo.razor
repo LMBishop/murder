@@ -5,18 +5,18 @@
 @inherits Panel
 
 <style>
-    playerinfo {
-        position: absolute;
-        left: 30px;
-        bottom: 30px;
-        background-color: rgba(0, 0, 0, 0.20);
-		backdrop-filter-blur: 8px;
-        display: flex;
-        align-items: center;
-        flex-direction: row;
-        gap: 10px;
-        padding: 10px;
-    }
+playerinfo {
+	position: absolute;
+	left: 30px;
+	bottom: 30px;
+	background-color: rgba(0, 0, 0, 0.20);
+	backdrop-filter-blur: 8px;
+	display: flex;
+	align-items: center;
+	flex-direction: row;
+	gap: 10px;
+	padding: 10px;
+}
 </style>
 
 <Health Colour="@GetTeamColour()"></Health>
@@ -24,18 +24,18 @@
 
 @code
 {
-	public string GetTeamColour()
-	{
-		var ClientPawn = Game.LocalPawn;
-		if (ClientPawn is Player)
-		{
-			return TeamOperations.GetTeamColour(((Player)ClientPawn).CurrentTeam);
-		}
-		return "";
-	}
+    public string GetTeamColour()
+    {
+        var ClientPawn = Game.LocalPawn;
+        if (ClientPawn is Player)
+        {
+            return TeamOperations.GetTeamColour(((Player)ClientPawn).CurrentTeam);
+        }
+        return "";
+    }
 
-	protected override int BuildHash()
-	{
-		return GetTeamColour().GetHashCode();
-	}
+    protected override int BuildHash()
+    {
+        return GetTeamColour().GetHashCode();
+    }
 }

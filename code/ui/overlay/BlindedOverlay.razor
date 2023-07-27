@@ -5,39 +5,39 @@
 @inherits Panel
 
 <style>
-    @@keyframes fadeIn 
-    {
-	    0% { opacity: 0; }
-	    100% { opacity: 1; }
-	}
-    blindedoverlay
-    {
-        position: absolute;
-        left: 0;
-        top: 0;
-        background-color: rgba(0, 0, 0, 0.80);
-        width: 100vw;
-        height: 100vh;
-		backdrop-filter-blur: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        flex-direction: column;
-        gap: 100vh;
-        animation-name: fadeIn;
-        animation-duration: 1s;
-        animation-iteration-count: 1;
-        animation-timing-function: linear;
-        animation-fill-mode: forwards;
-    }
-    .overlay-message
-    {
-        margin: 20vh;
-        color: white;
-        font-size: 35px;
-        font-family: "Roboto";
-        font-weight: 700;
-    }
+@@keyframes fadeIn 
+{
+	0% { opacity: 0; }
+	100% { opacity: 1; }
+}
+blindedoverlay
+{
+	position: absolute;
+	left: 0;
+	top: 0;
+	background-color: rgba(0, 0, 0, 0.80);
+	width: 100vw;
+	height: 100vh;
+	backdrop-filter-blur: 16px;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	flex-direction: column;
+	gap: 100vh;
+	animation-name: fadeIn;
+	animation-duration: 1s;
+	animation-iteration-count: 1;
+	animation-timing-function: linear;
+	animation-fill-mode: forwards;
+}
+.overlay-message
+{
+	margin: 20vh;
+	color: white;
+	font-size: 35px;
+	font-family: "Roboto";
+	font-weight: 700;
+}
 </style>
 
 <div class="overlay-message">
@@ -50,14 +50,14 @@ You shot a bystander!
 
     public bool ShowOverlay { get; set; } = false;
 
-	public BlindedOverlay()
+    public BlindedOverlay()
     {
         SetClass( "hidden", true );
 
         Instance = this;
     }
 
-	protected override int BuildHash()
+    protected override int BuildHash()
     {
         return ShowOverlay.GetHashCode();
     }

@@ -6,9 +6,9 @@
 
 <style>
 .team-info {
-	font-size: 35px;
-	font-weight: 700;
-	font-family: "Roboto";
+    font-size: 35px;
+    font-weight: 700;
+    font-family: "Roboto";
 }
 </style>
 
@@ -18,20 +18,20 @@
 
 @code
 {
-	public string Colour { get; set; }
+    public string Colour { get; set; }
 
-	public string GetTeamName()
-	{
-		var ClientPawn = Game.LocalPawn;
-		if (ClientPawn is Player)
-		{
-			return TeamOperations.GetTeamName(((Player)ClientPawn).CurrentTeam);
-		}
-		return "";
-	}
+    public string GetTeamName()
+    {
+        var ClientPawn = Game.LocalPawn;
+        if (ClientPawn is Player)
+        {
+            return TeamOperations.GetTeamName(((Player)ClientPawn).CurrentTeam);
+        }
+        return "";
+    }
 
-	protected override int BuildHash()
-	{
-		return GetTeamName().GetHashCode();
-	}
+    protected override int BuildHash()
+    {
+        return GetTeamName().GetHashCode();
+    }
 }

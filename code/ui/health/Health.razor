@@ -6,33 +6,33 @@
 
 <style>
 Health {
-	width: 400px;
-	height: 100%;
-	background-color: rgba(0, 0, 0, 0.90);
+    width: 400px;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.90);
 }
 .fill {
-	height: 100%;
-	transition: width 0.2s ease-out;
+    height: 100%;
+    transition: width 0.2s ease-out;
 }
 </style>
 <div class="fill" style="background-color: @(Colour); width: @(GetHealth())%;"></div>
 
 @code
 {
-	public string Colour { get; set; }
+    public string Colour { get; set; }
 
-	public int GetHealth()
-	{
-		var ClientPawn = Game.LocalPawn;
-		if (ClientPawn is Player)
-		{
-			return ClientPawn.Health.CeilToInt();
-		}
-		return 0;
-	}
+    public int GetHealth()
+    {
+        var ClientPawn = Game.LocalPawn;
+        if (ClientPawn is Player)
+        {
+            return ClientPawn.Health.CeilToInt();
+        }
+        return 0;
+    }
 
-	protected override int BuildHash()
-	{
-		return GetHealth().GetHashCode();
-	}
+    protected override int BuildHash()
+    {
+        return GetHealth().GetHashCode();
+    }
 }

@@ -14,12 +14,6 @@ public partial class MurderGame : Sandbox.GameManager
 		{
 			Game.RootPanel = new Hud();
 		}
-	//	if ( Game.IsServer )
-	//	{
-	//		// The packageName should always match org.ident
-	//		// In this case, we ask to download gvar.citizen_zombie -> https://asset.party/gvar/citizen_zombie
-	//		DownloadAsset( "gvar.citizen_zombie" );
-	//	}
 	}
 
 	public static MurderGame Instance

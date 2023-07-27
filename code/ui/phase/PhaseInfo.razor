@@ -6,18 +6,18 @@
 @attribute [StyleSheet]
 
 <div>
-	@GetPhase().Title
+    @GetPhase().Title
 </div>
 
 @code
 {
-	public BasePhase GetPhase()
-	{
-		return MurderGame.Instance.CurrentPhase;
-	}
+    public BasePhase GetPhase()
+    {
+        return MurderGame.Instance.CurrentPhase;
+    }
 
-	protected override int BuildHash()
-	{
-		return GetPhase().GetHashCode();
-	}
+    protected override int BuildHash()
+    {
+        return GetPhase().GetHashCode();
+    }
 }
