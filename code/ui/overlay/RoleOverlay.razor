@@ -1,0 +1,94 @@
+
+@using Sandbox;
+@using Sandbox.UI;
+
+@namespace MurderGame
+@inherits Panel
+
+<style>
+    roleoverlay
+    {
+        position: absolute;
+        left: 0;
+        top: 0;
+        background-color: #000000;
+        width: 100vw;
+        height: 100vh;
+		z-index: 10000;
+    }
+	.container {
+		display: flex;
+		align-items: center;
+		flex-direction: column;
+		max-width: 700px;
+		text-align: center;
+		gap: 50px;
+		margin: 0 auto;
+		top: 200px;
+	}
+    .name
+    {
+        font-size: 50;
+		font-weight: 700;
+        font-family: "Roboto";
+    }
+    .description
+    {
+        font-size: 30;
+        font-family: "Roboto";
+    }
+</style>
+
+<div class="container">
+	<div class="name" style="color: @(GetTeamColour())">
+		@GetTeamName()
+	</div>
+	<div class="description" style="color: @(GetTeamColour())">
+		@GetTeamDescription()
+	</div>
+</div>
+
+@code
+{
+	public string GetTeamName()
+	{
+		if (Game.LocalPawn is Player player)
+		{
+			return TeamOperations.GetTeamName(player.CurrentTeam);
+		}
+		return "";
+	}
+	public string GetTeamDescription()
+	{
+		if (Game.LocalPawn is Player player)
+		{
+			return TeamOperations.GetTeamDescription(player.CurrentTeam);
+		}
+		return "";
+	}
+	public string GetTeamColour()
+	{
+		if (Game.LocalPawn is Player player)
+		{
+			return TeamOperations.GetTeamColour(player.CurrentTeam);
+		}
+		return "";
+	}
+
+    public static RoleOverlay Instance { get; private set; }
+
+    public bool ShowOverlay { get; set; } = false;
+
+	public RoleOverlay()
+    {
+        SetClass( "hidden", true );
+
+        Instance = this;
+    }
+
+	protected override int BuildHash()
+    {
+        return ShowOverlay.GetHashCode();
+    }
+
+}

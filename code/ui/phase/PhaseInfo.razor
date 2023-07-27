@@ -1,0 +1,23 @@
+@using Sandbox;
+@using Sandbox.UI;
+
+@namespace MurderGame
+@inherits Panel
+@attribute [StyleSheet]
+
+<div>
+	@GetPhase().Title
+</div>
+
+@code
+{
+	public BasePhase GetPhase()
+	{
+		return MurderGame.Instance.CurrentPhase;
+	}
+
+	protected override int BuildHash()
+	{
+		return GetPhase().GetHashCode();
+	}
+}

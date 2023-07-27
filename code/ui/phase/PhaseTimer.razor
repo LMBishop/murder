@@ -1,0 +1,61 @@
+@using Sandbox;
+@using System
+@using Sandbox.UI;
+
+@namespace MurderGame
+@inherits Panel
+
+<style>
+phasetimer {
+	position: absolute;
+	top: 0;
+	width: 100%;
+	margin: 30px auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+.box {
+	background-color: rgba(0, 0, 0, 0.20);
+	backdrop-filter-blur: 8px;
+	padding: 5px;
+	color: white;
+	font-weight: 700;
+	font-size: 30px;
+	font-family: "Roboto";
+}
+</style>
+
+@if (HasTime())
+{
+<div class="box">
+	@GetTime()
+</div>
+} else
+{
+<div class="box">
+	@GetPhase()
+</div>
+}
+
+@code
+{
+	public bool HasTime()
+	{
+		return MurderGame.Instance.CurrentPhase.TimeLeft >= 0;
+	}
+	public string GetTime()
+	{
+		TimeSpan timeSpan = TimeSpan.FromSeconds(MurderGame.Instance.CurrentPhase.TimeLeft);
+		return timeSpan.ToString(@"mm\:ss");
+	}
+	public string GetPhase()
+	{
+		return MurderGame.Instance.CurrentPhase.Title;
+	}
+
+	protected override int BuildHash()
+	{
+		return HashCode.Combine(MurderGame.Instance.CurrentPhase.TimeLeft.GetHashCode(), MurderGame.Instance.CurrentPhase.Title.GetHashCode());
+	}
+}

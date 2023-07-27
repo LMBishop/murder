@@ -1,0 +1,37 @@
+@using Sandbox;
+@using Sandbox.UI;
+
+@namespace MurderGame
+@inherits Panel
+
+<style>
+.team-info {
+	font-size: 35px;
+	font-weight: 700;
+	font-family: "Roboto";
+}
+</style>
+
+<div class="team-info" style="color: @(Colour)">
+@GetTeamName()
+</div>
+
+@code
+{
+	public string Colour { get; set; }
+
+	public string GetTeamName()
+	{
+		var ClientPawn = Game.LocalPawn;
+		if (ClientPawn is Player)
+		{
+			return TeamOperations.GetTeamName(((Player)ClientPawn).CurrentTeam);
+		}
+		return "";
+	}
+
+	protected override int BuildHash()
+	{
+		return GetTeamName().GetHashCode();
+	}
+}

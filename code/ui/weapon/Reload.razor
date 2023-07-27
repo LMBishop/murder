@@ -1,0 +1,82 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using System;
+
+@namespace MurderGame
+@inherits Panel
+
+<style>
+@@keyframes blink {
+	0% {
+		background-color: rgba(0, 0, 0, 0.20);
+	}
+	49% {
+		background-color: rgba(0, 0, 0, 0.20);
+	}
+	50% {
+		background-color: rgba(255, 0, 0, 0.20);
+	}
+	100% {
+		background-color: rgba(255, 0, 0, 0.20);
+	}
+}
+reload {
+	width: 100vw;
+	height: 100vh;
+}
+.box {
+	position: absolute;
+	left: 47%;
+	top: 60%;
+	width: 6%;
+	backdrop-filter-blur: 8px;
+	background-color: rgba(0, 0, 0, 0.20);
+	padding: 5px;
+	color: white;
+	font-weight: 700;
+	font-size: 30px;
+	font-family: "Roboto";
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.blink {
+	animation-name: blink;
+	animation-duration: 0.33s;
+}
+</style>
+
+@if (ReloadNeeded) {
+<!--<div class="box @(@Blink ? "blink" : "")">-->
+<div class="box blink">
+	<div>Reload</div>
+</div>
+}
+
+@code
+{
+	public bool ReloadNeeded { get; set; }
+	public bool Blink { get; set; }
+
+	protected override int BuildHash()
+	{
+		var localPawn = Game.LocalPawn;
+		if (localPawn is Player player)
+		{
+			var inventory = player.Inventory;
+			if (inventory != null && inventory.GetCurrentWeapon() != null)
+			{
+				var weapon = inventory.GetCurrentWeapon();
+				var ammo = weapon.Ammo;
+				ReloadNeeded = ammo == 0 && !weapon.Reloading;
+				Blink = !weapon.Reloading;
+				return HashCode.Combine(ReloadNeeded.GetHashCode(), Blink.GetHashCode());
+			}
+		}
+		if (ReloadNeeded)
+		{
+			ReloadNeeded = false;
+		}
+		return ReloadNeeded.GetHashCode();
+	}
+}

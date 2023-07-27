@@ -1,0 +1,250 @@
+{
+  "Title": "Murder Mystery",
+  "Type": "game",
+  "Org": "leonardobishop",
+  "Ident": "murder",
+  "Tags": null,
+  "Schema": 1,
+  "HasAssets": true,
+  "AssetsPath": "",
+  "Resources": null,
+  "MenuResources": "\nui/mainmenu/*\nmenu/*",
+  "HasCode": true,
+  "CodePath": "/code/",
+  "PackageReferences": [],
+  "EditorReferences": null,
+  "Metadata": {
+    "MaxPlayers": 16,
+    "MinPlayers": 1,
+    "GameNetworkType": "Multiplayer",
+    "MapSelect": "Unrestricted",
+    "MapList": [
+      "facepunch.square"
+    ],
+    "RankType": "None",
+    "PerMapRanking": false,
+    "LeaderboardType": "None",
+    "GameCategory": "TechDemos",
+    "ProjectTemplate": null,
+    "CsProjName": "",
+    "HttpAllowList": null,
+    "SavedGames": true,
+    "MapDependentSaves": false,
+    "SaveFormatVersion": 1001,
+    "TickRate": 50,
+    "LaunchConfigs": [
+      {
+        "Name": "Murder",
+        "GameIdent": "leonardobishop.murder#local",
+        "MapName": "thieves.clue",
+        "MaxPlayers": 3,
+        "GameSettings": {},
+        "Addons": "",
+        "PreLaunchCommand": "sv_lan 1;",
+        "PostLaunchCommand": "sv_lan 1;"
+      },
+      {
+        "Name": "Murder (Square)",
+        "GameIdent": "leonardobishop.murder#local",
+        "MapName": "facepunch.square",
+        "MaxPlayers": 3,
+        "GameSettings": {},
+        "Addons": "",
+        "PreLaunchCommand": "sv_lan 1;",
+        "PostLaunchCommand": "sv_lan 1;"
+      }
+    ],
+    "ControlModes": {},
+    "InputSettings": {
+      "Actions": [
+        {
+          "Name": "Forward",
+          "KeyboardCode": "W",
+          "GroupName": "Movement"
+        },
+        {
+          "Name": "Backward",
+          "KeyboardCode": "S",
+          "GroupName": "Movement"
+        },
+        {
+          "Name": "Left",
+          "KeyboardCode": "A",
+          "GroupName": "Movement"
+        },
+        {
+          "Name": "Right",
+          "KeyboardCode": "D",
+          "GroupName": "Movement"
+        },
+        {
+          "Name": "Jump",
+          "KeyboardCode": "space",
+          "GamepadCode": "A",
+          "GroupName": "Movement"
+        },
+        {
+          "Name": "Run",
+          "KeyboardCode": "shift",
+          "GamepadCode": "LeftJoystickButton",
+          "GroupName": "Movement"
+        },
+        {
+          "Name": "Walk",
+          "KeyboardCode": "alt",
+          "GroupName": "Movement"
+        },
+        {
+          "Name": "Duck",
+          "KeyboardCode": "ctrl",
+          "GamepadCode": "B",
+          "GroupName": "Movement"
+        },
+        {
+          "Name": "attack1",
+          "KeyboardCode": "mouse1",
+          "GamepadCode": "RightTrigger",
+          "GroupName": "Actions"
+        },
+        {
+          "Name": "attack2",
+          "KeyboardCode": "mouse2",
+          "GamepadCode": "LeftTrigger",
+          "GroupName": "Actions"
+        },
+        {
+          "Name": "reload",
+          "KeyboardCode": "r",
+          "GamepadCode": "X",
+          "GroupName": "Actions"
+        },
+        {
+          "Name": "use",
+          "KeyboardCode": "e",
+          "GamepadCode": "Y",
+          "GroupName": "Actions"
+        },
+        {
+          "Name": "Slot1",
+          "KeyboardCode": "1",
+          "GamepadCode": "DpadWest",
+          "GroupName": "Inventory"
+        },
+        {
+          "Name": "Slot2",
+          "KeyboardCode": "2",
+          "GamepadCode": "DpadEast",
+          "GroupName": "Inventory"
+        },
+        {
+          "Name": "SlotPrev",
+          "KeyboardCode": "mouse4",
+          "GamepadCode": "SwitchLeftBumper",
+          "GroupName": "Inventory"
+        },
+        {
+          "Name": "SlotNext",
+          "KeyboardCode": "mouse5",
+          "GamepadCode": "SwitchRightBumper",
+          "GroupName": "Inventory"
+        },
+        {
+          "Name": "Voice",
+          "KeyboardCode": "v",
+          "GamepadCode": "RightJoystickButton",
+          "GroupName": "Other"
+        },
+        {
+          "Name": "Drop",
+          "KeyboardCode": "g",
+          "GamepadCode": "RightJoystickButton",
+          "GroupName": "Other"
+        },
+        {
+          "Name": "Flashlight",
+          "KeyboardCode": "f",
+          "GamepadCode": "DpadNorth",
+          "GroupName": "Other"
+        },
+        {
+          "Name": "Score",
+          "KeyboardCode": "tab",
+          "GamepadCode": "SwitchLeftMenu",
+          "GroupName": "Other"
+        },
+        {
+          "Name": "Menu",
+          "KeyboardCode": "Q",
+          "GamepadCode": "SwitchRightMenu",
+          "GroupName": "Other"
+        },
+        {
+          "Name": "Chat",
+          "KeyboardCode": "enter",
+          "GroupName": "Other"
+        }
+      ]
+    },
+    "Collision": {
+      "Defaults": {
+        "solid": "Collide",
+        "trigger": "Trigger",
+        "ladder": "Ignore",
+        "water": "Trigger",
+        "livingplayer": "Collide",
+        "ragdoll": "Unset",
+        "droppedweapon": "Unset"
+      },
+      "Pairs": [
+        {
+          "a": "solid",
+          "b": "solid",
+          "r": "Collide"
+        },
+        {
+          "a": "trigger",
+          "b": "playerclip",
+          "r": "Ignore"
+        },
+        {
+          "a": "trigger",
+          "b": "solid",
+          "r": "Trigger"
+        },
+        {
+          "a": "solid",
+          "b": "trigger",
+          "r": "Collide"
+        },
+        {
+          "a": "playerclip",
+          "b": "solid",
+          "r": "Collide"
+        },
+        {
+          "a": "livingplayer",
+          "b": "livingplayer",
+          "r": "Collide"
+        },
+        {
+          "a": "ragdoll",
+          "b": "ragdoll"
+        },
+        {
+          "a": "droppedweapon",
+          "b": "droppedweapon"
+        },
+        {
+          "a": "livingplayer",
+          "b": "ragdoll",
+          "r": "Ignore"
+        },
+        {
+          "a": "livingplayer",
+          "b": "droppedweapon",
+          "r": "Trigger"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,26 @@
+@using Sandbox;
+@using Sandbox.UI;
+
+@namespace MurderGame
+@inherits RootPanel
+@attribute [StyleSheet]
+<style>
+.hidden {
+	display: none;
+}
+</style>
+
+<root>
+	<BlindedOverlay/>
+    <RoleOverlay/>
+    <ChatBox/>
+    <VoiceList/>
+    <PhaseTimer/>
+    <Crosshair/>
+    <Reload/>
+    <PlayerInfo/>
+</root>
+
+@code
+{
+}
