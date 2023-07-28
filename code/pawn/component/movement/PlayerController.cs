@@ -14,6 +14,10 @@ public class PlayerController : EntityComponent<Player>
 
 	HashSet<string> ControllerEvents = new( StringComparer.OrdinalIgnoreCase );
 
+	bool IsTouchingLadder = false;
+
+	Vector3 LadderNormal;
+
 	bool Grounded => Entity.GroundEntity.IsValid();
 
 	public void Simulate( Player player )
@@ -25,6 +29,8 @@ public class PlayerController : EntityComponent<Player>
 		var moveVector = Rotation.From( angles ) * movement * 320f;
 		var groundEntity = CheckForGround();
 		var team = Entity.CurrentTeam;
+
+		// wasd -- start
 
 		if ( groundEntity.IsValid() )
 		{
@@ -44,10 +50,25 @@ public class PlayerController : EntityComponent<Player>
 			Entity.Velocity += Vector3.Down * Gravity * Time.Delta * (1/SpeedMultiplier);
 		}
 
+		// wasd -- end
+
+		// ladder -- start
+
+		if (CheckLadder())
+		{
+			float normalDot = moveVector.Dot(LadderNormal);
+			var cross = LadderNormal * normalDot;
+			Entity.Velocity = (moveVector - cross) + (-normalDot * LadderNormal.Cross(Vector3.Up.Cross(LadderNormal).Normal) * 0.5f);
+		}
+
+		// ladder -- end
+
 		if ( Input.Pressed( "jump" ) )
 		{
 			DoJump();
 		}
+
+		// actually do move --
 
 		var mh = new MoveHelper( Entity.Position, Entity.Velocity );
 		mh.Trace = mh.Trace.Size( Entity.Hull ).Ignore( Entity );
@@ -76,6 +97,44 @@ public class PlayerController : EntityComponent<Player>
 		{
 			Entity.Velocity = ApplyJump( Entity.Velocity, "jump" );
 		}
+	}
+
+	public bool CheckLadder()
+	{
+		var wishvel = new Vector3( Entity.InputDirection.x.Clamp( -1f, 1f ), Entity.InputDirection.y.Clamp( -1f, 1f ), 0);
+		wishvel *= Entity.ViewAngles.WithPitch(0).ToRotation();
+		wishvel = wishvel.Normal;
+
+		if (IsTouchingLadder)
+		{
+			if (Input.Pressed("jump"))
+			{
+				Entity.Velocity = LadderNormal * 100.0f;
+				return false;
+
+			}
+			else if (Entity.GroundEntity != null && LadderNormal.Dot(wishvel) > 0)
+			{
+				return false;
+			}
+		}
+
+		const float ladderDistance = 1.0f;
+		var start = Entity.Position;
+		Vector3 end = start + (IsTouchingLadder ? (LadderNormal * -1.0f) : wishvel) * ladderDistance;
+
+		var pm = Trace.Ray(start, end)
+					.Size(Entity.Hull.Mins, Entity.Hull.Maxs)
+					.WithTag("ladder")
+					.Ignore(Entity)
+					.Run();
+
+		if (pm.Hit)
+		{
+			LadderNormal = pm.Normal;
+			return true;
+		}
+		return false;
 	}
 
 	Entity CheckForGround()
