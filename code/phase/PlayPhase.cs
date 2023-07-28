@@ -47,6 +47,7 @@ public class PlayPhase : BasePhase
 	{
 		Log.Info( "Removing blind from " + entity.Name );
 		BlindedOverlay.Hide( To.Single( entity ) );
+		DeathOverlay.Hide( To.Single( entity ) );
 		if (entity is Player pawn && pawn.IsValid() )
 		{
 			if (pawn.Controller != null) pawn.Controller.SpeedMultiplier = 1;
@@ -103,20 +104,25 @@ public class PlayPhase : BasePhase
 		}
 		Player victimPlayer = (Player)victim;
 		Player killerPlayer = (Player)killer;
+
 		Team victimTeam = victimPlayer.CurrentTeam;
 		Team killerTeam = killerPlayer.CurrentTeam;
+
 		victimPlayer.CurrentTeam = Team.Spectator;
 
 		Log.Info( victimPlayer + " died to " + killerPlayer );
+
 		if (victimTeam != Team.Murderer && killerTeam != Team.Murderer) 
 		{
 			Log.Info( killerPlayer + " shot a bystander");
+
 			ChatBox.Say( killerPlayer.Client.Name + " killed an innocent bystander" );
+
 			BlindedOverlay.Show( To.Single( killer ) );
+
 			if (killerPlayer.Controller != null) killerPlayer.Controller.SpeedMultiplier = 0.3f;
 			if (killerPlayer.Inventory != null)
 			{
-			Log.Info( killerPlayer + "bonk");
 				killerPlayer.Inventory.AllowPickup = false;
 				killerPlayer.Inventory.SpillContents(killerPlayer.EyePosition, killerPlayer.AimRay.Forward);
 			}

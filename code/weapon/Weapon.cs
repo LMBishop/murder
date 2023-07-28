@@ -195,11 +195,13 @@ public partial class Weapon : AnimatedEntity
 	[ClientRpc]
 	public void CreateViewModel()
 	{
+		DestroyViewModel();
 		if ( ViewModelPath == null ) return;
 
 		var vm = new WeaponViewModel( this );
 		vm.Model = Model.Load( ViewModelPath );
 		vm.Owner = Owner;
+		vm.Parent = Game.LocalPawn;
 		ViewModelEntity = vm;
 		if (!string.IsNullOrEmpty(HandsModelPath))
 		{

@@ -21,9 +21,10 @@ public class AssignPhase : BasePhase
 		var detectivesNeeded = 1;
 		var murderersNeeded = 1;
 
-		List<SpawnPoint> spawnpoints = Entity.All.OfType<SpawnPoint>().OrderBy( x => Guid.NewGuid() ).ToList();
+		Random random = new();
+		List<SpawnPoint> spawnpoints = Entity.All.OfType<SpawnPoint>().OrderBy( _ => random.Next() ).ToList();
 		var clients = Game.Clients.ToList();
-		foreach ( int i in Enumerable.Range( 0, clients.Count ).OrderBy( x => Guid.NewGuid() ) )
+		foreach ( int i in Enumerable.Range( 0, clients.Count ).OrderBy( _ => random.Next() ) )
 		{
 			var client = clients[i];
 			if (client.Pawn != null)
@@ -60,7 +61,7 @@ public class AssignPhase : BasePhase
 			var spawnpoint = spawnpoints[0];
 			spawnpoints.RemoveAt( 0 );
 			var tx = spawnpoint.Transform;
-			tx.Position = tx.Position + Vector3.Up * 50.0f;
+			tx.Position = tx.Position + Vector3.Up * 10.0f;
 			pawn.Transform = tx;
 
 			RoleOverlay.Show( To.Single( client ) );

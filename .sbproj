@@ -34,14 +34,14 @@
     "TickRate": 50,
     "LaunchConfigs": [
       {
-        "Name": "Murder",
+        "Name": "Murder (Clue)",
         "GameIdent": "leonardobishop.murder#local",
         "MapName": "thieves.clue",
-        "MaxPlayers": 3,
+        "MaxPlayers": 6,
         "GameSettings": {},
         "Addons": "",
-        "PreLaunchCommand": "sv_lan 1;",
-        "PostLaunchCommand": "sv_lan 1;"
+        "PreLaunchCommand": "sv_lan 1; sv_cheats 1;",
+        "PostLaunchCommand": "sv_lan 1; sv_cheats 1;"
       },
       {
         "Name": "Murder (Square)",
@@ -50,8 +50,8 @@
         "MaxPlayers": 3,
         "GameSettings": {},
         "Addons": "",
-        "PreLaunchCommand": "sv_lan 1;",
-        "PostLaunchCommand": "sv_lan 1;"
+        "PreLaunchCommand": "sv_lan 1; sv_cheats 1;",
+        "PostLaunchCommand": "sv_lan 1; sv_cheats 1;"
       }
     ],
     "ControlModes": {},

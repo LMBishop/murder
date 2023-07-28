@@ -36,8 +36,8 @@ public partial class Player : AnimatedEntity
 	{
 		get => new
 		(
-			new Vector3( -12, -12, 0 ),
-			new Vector3( 12, 12, 64 )
+			new Vector3( -16, -16, 0 ),
+			new Vector3( 16, 16, 72 )
 		);
 	}
 
@@ -49,6 +49,7 @@ public partial class Player : AnimatedEntity
 	[BindComponent] public PlayerInventory Inventory { get; }
 	[BindComponent] public PlayerSpectator Spectator { get; }
 
+	[Net]
 	public Ragdoll PlayerRagdoll { get; set; }
 	public ClothingContainer PlayerClothingContainer { get; set; }
 
@@ -56,6 +57,9 @@ public partial class Player : AnimatedEntity
 	public int LastHitBone { get; set; }
 
 	public override Ray AimRay => new Ray( EyePosition, EyeRotation.Forward );
+
+	[Net, Predicted]
+	public TimeSince TimeSinceDeath { get; set; } = 0;
 
 	public override void Spawn()
 	{
@@ -66,21 +70,29 @@ public partial class Player : AnimatedEntity
 		EnableDrawing = false;
 		EnableHideInFirstPerson = true;
 		EnableShadowInFirstPerson = true;
+
 		SetupPhysicsFromAABB( PhysicsMotionType.Keyframed, Hull.Mins, Hull.Maxs );
 		EnableSolidCollisions = false;
+
+		Health = 0f;
+		LifeState = LifeState.Dead;
 	}
 
 	public void Respawn()
 	{
+		DeleteRagdoll();
 		Tags.Add( "livingplayer" );
+
 		EnableAllCollisions = true;
 		EnableDrawing = true;
-		Components.Remove( Spectator );
+
+		Components.RemoveAll();
 		Components.Create<PlayerController>();
 		Components.Create<PlayerAnimator>();
 		Components.Create<PlayerInventory>();
+
 		Health = 100f;
-		DeleteRagdoll();
+		LifeState = LifeState.Alive;
 	}
 
 	public void Cleanup()
@@ -101,19 +113,27 @@ public partial class Player : AnimatedEntity
 
 	public void DisablePlayer()
 	{
-		EnableAllCollisions = false;
-		LifeState = LifeState.Dead;
 		Tags.Remove( "livingplayer" );
+
+		EnableAllCollisions = false;
+		EnableDrawing = false;
+
 		Inventory?.Clear();
 		Components.RemoveAll();
-		EnableDrawing = false;
+
+		LifeState = LifeState.Dead;
 	}
 
 	public override void OnKilled()
 	{
+		TimeSinceDeath = 0;
+
 		Inventory?.SpillContents(EyePosition, new Vector3(0,0,0));
+
 		DisablePlayer();
+		
 		Event.Run( MurderEvent.Kill, LastAttacker, this );
+
 		var ragdoll = new Ragdoll();
 		ragdoll.Position = Position;
 		ragdoll.Rotation = Rotation;
@@ -121,7 +141,8 @@ public partial class Player : AnimatedEntity
 		ragdoll.PhysicsGroup.AddVelocity(LastAttackForce / 100);
 		PlayerClothingContainer.DressEntity( ragdoll );
 		PlayerRagdoll = ragdoll;
-		Components.Create<PlayerSpectator>();
+
+		DeathOverlay.Show( To.Single( Client ) );
 	}
 
 	public override void TakeDamage( DamageInfo info )
@@ -151,11 +172,22 @@ public partial class Player : AnimatedEntity
 	public override void Simulate( IClient cl )
 	{
 		SimulateRotation();
-		Controller?.Simulate( cl );
+		TickPlayerUse();
+
+		Controller?.Simulate( this );
 		Animator?.Simulate();
 		Inventory?.Simulate( cl );
 		Spectator?.Simulate();
+
 		EyeLocalPosition = Vector3.Up * (64f * Scale);
+
+		if (Game.IsServer && Spectator == null && LifeState == LifeState.Dead && TimeSinceDeath > 3)
+		{
+			Log.Info( "Spectator created" );
+			DeathOverlay.Hide( To.Single( Client ) );
+			Components.Create<PlayerSpectator>();
+		}
+
 	}
 
 	public override void BuildInput()
@@ -186,13 +218,23 @@ public partial class Player : AnimatedEntity
 			Spectator.FrameSimulate(this);
 			return;
 		}
+		else if (Controller != null)
+		{
+			//TOOD move below logic to controller
+		}
 		SimulateRotation();
 
 		Camera.Rotation = ViewAngles.ToRotation();
 		Camera.FieldOfView = Screen.CreateVerticalFieldOfView( Game.Preferences.FieldOfView );
 
 		Camera.FirstPersonViewer = this;
-		Camera.Position = EyePosition;
+		if (PlayerRagdoll != null && PlayerRagdoll.IsValid)
+		{ 
+			Camera.Position = PlayerRagdoll.Position;
+		} else
+		{
+			Camera.Position = EyePosition;
+		}
 	}
 
 	public TraceResult TraceBBox( Vector3 start, Vector3 end, float liftFeet = 0.0f )

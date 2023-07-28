@@ -1,0 +1,89 @@
+@using Sandbox;
+@using Sandbox.UI;
+
+@namespace MurderGame
+@inherits Panel
+
+<style>
+@@keyframes fadeIn 
+{
+	0% { opacity: 0; }
+	100% { opacity: 1; }
+}
+deathoverlay {
+}
+.overlay {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100vw;
+	height: 100vh;
+
+	background-color: rgba(80, 1, 1, 0.90);
+	backdrop-filter-blur: 64px;
+	animation-name: fadeIn;
+	animation-duration: 2.5s;
+	animation-iteration-count: 1;
+	animation-timing-function: ease-in;
+	animation-fill-mode: forwards;
+}
+.box {
+	backdrop-filter-blur: 8px;
+	background-color: rgba(0, 0, 0, 0.20);
+	padding: 10px;
+	color: white;
+	font-weight: 700;
+	font-size: 35px;
+	font-family: "Roboto";
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 300px;
+}
+.box-container {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100vw;
+	height: 100vh;
+
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	flex-direction: column;
+}
+</style>
+
+@if (ShowOverlay)
+{
+<div class="overlay">
+</div>
+<div class="box-container">
+	<div class="box">
+	You have died
+	</div>
+</div>
+}
+
+@code
+{
+    public static DeathOverlay Instance { get; private set; }
+
+    public DeathOverlay()
+    {
+        Instance = this;
+    }
+
+	public bool ShowOverlay { get; set; }
+
+	protected override int BuildHash()
+	{
+		var clientPawn = Game.LocalPawn;
+		if (clientPawn is Player player)
+		{
+			ShowOverlay = player.LifeState == LifeState.Dead && player.Spectator == null;
+		}
+        return ShowOverlay.GetHashCode();
+    }
+
+}

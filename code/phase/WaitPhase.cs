@@ -23,6 +23,7 @@ public class WaitPhase : BasePhase
 			{
 				base.NextPhase = new AssignPhase();
 				base.IsFinished = true;
+				return;
 			}
 			else if (CountIn && !_isCountDown)
 			{
@@ -33,6 +34,36 @@ public class WaitPhase : BasePhase
 		{
 			_isCountDown = false;
 			base.TimeLeft = -1;
+		}
+
+		foreach (var client in Game.Clients)
+		{
+			if (client.Pawn == null)
+			{
+				var pawn = new Player();
+				client.Pawn = pawn;
+
+				var spawnpoints = Entity.All.OfType<SpawnPoint>();
+				var randomSpawnPoint = spawnpoints.OrderBy( x => Guid.NewGuid() ).FirstOrDefault();
+				if ( randomSpawnPoint != null )
+				{
+					var tx = randomSpawnPoint.Transform;
+					tx.Position = tx.Position + Vector3.Up * 50.0f;
+					pawn.Transform = tx;
+				}
+
+				pawn.CurrentTeam = Team.Bystander;
+				pawn.Spawn();
+				pawn.Respawn();
+			} else
+			{
+				var pawn = (Player)client.Pawn;
+				if (pawn.LifeState == LifeState.Dead)
+				{
+					pawn.CurrentTeam = Team.Bystander;
+					pawn.Respawn();
+				}
+			}
 		}
 	}
 

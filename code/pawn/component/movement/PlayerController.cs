@@ -6,7 +6,7 @@ namespace MurderGame;
 
 public class PlayerController : EntityComponent<Player>
 {
-	public int StepSize => 12;
+	public int StepSize => 24;
 	public int GroundAngle => 45;
 	public int JumpSpeed => 300;
 	public float Gravity => 800f;
@@ -16,7 +16,7 @@ public class PlayerController : EntityComponent<Player>
 
 	bool Grounded => Entity.GroundEntity.IsValid();
 
-	public void Simulate( IClient cl )
+	public void Simulate( Player player )
 	{
 		ControllerEvents.Clear();
 
@@ -52,6 +52,12 @@ public class PlayerController : EntityComponent<Player>
 		var mh = new MoveHelper( Entity.Position, Entity.Velocity );
 		mh.Trace = mh.Trace.Size( Entity.Hull ).Ignore( Entity );
 
+		if (mh.TryUnstuck())
+		{
+			Entity.Position = mh.Position;
+			Entity.Velocity = mh.Velocity;
+		}
+
 		if ( mh.TryMoveWithStep( Time.Delta, StepSize ) > 0 )
 		{
 			if ( Grounded )
@@ -61,7 +67,6 @@ public class PlayerController : EntityComponent<Player>
 			Entity.Position = mh.Position;
 			Entity.Velocity = mh.Velocity;
 		}
-
 		Entity.GroundEntity = groundEntity;
 	}
 

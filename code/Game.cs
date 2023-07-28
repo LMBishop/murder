@@ -56,6 +56,7 @@ public partial class MurderGame : Sandbox.GameManager
 		// Create a pawn for this client to play with
 		var pawn = new Player();
 		client.Pawn = pawn;
+		pawn.Spawn();
 
 		var spawnpoints = Entity.All.OfType<SpawnPoint>();
 		var randomSpawnPoint = spawnpoints.OrderBy( x => Guid.NewGuid() ).FirstOrDefault();
