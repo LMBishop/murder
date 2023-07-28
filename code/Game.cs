@@ -1,5 +1,6 @@
 ﻿
 using Sandbox;
+using Sandbox.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -64,6 +65,15 @@ public partial class MurderGame : Sandbox.GameManager
 			tx.Position = tx.Position + Vector3.Up * 50.0f;
 			pawn.Transform = tx;
 		}
+
+		ChatBox.Say( client.Name + " joined the game" );
+	}
+
+	public override void ClientDisconnect( IClient client, NetworkDisconnectionReason reason )
+	{
+		base.ClientDisconnect(client, reason );
+
+		ChatBox.Say( client.Name + " left the game (" + reason.ToString() + ")" );
 	}
 }
 

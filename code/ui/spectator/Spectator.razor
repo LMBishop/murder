@@ -1,0 +1,63 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using System;
+
+@namespace MurderGame
+@inherits Panel
+
+<style>
+spectator {
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	position: absolute;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	flex-direction: column;
+}
+.box {
+	backdrop-filter-blur: 8px;
+	background-color: rgba(0, 0, 0, 0.20);
+	padding: 10px;
+	color: white;
+	font-weight: 700;
+	font-size: 35px;
+	font-family: "Roboto";
+	margin: 30px;
+}
+</style>
+
+@if (Spectating) {
+<div class="box">
+	<div>Spectating @TargetName</div>
+</div>
+}
+
+@code
+{
+	public bool Spectating { get; set; }
+	public string TargetName { get; set; }
+
+	protected override int BuildHash()
+	{
+		var localPawn = Game.LocalPawn;
+		if (localPawn is Player player)
+		{
+			var spectator = player.Spectator;
+			if (spectator != null)
+			{
+				var target = spectator.Target;
+				Spectating = true;
+				TargetName = (target != null && target.IsValid() && target.LifeState == LifeState.Alive) ? target.Client.Name : "";
+				return HashCode.Combine(Spectating.GetHashCode(), TargetName.GetHashCode());
+			}
+		}
+		if (Spectating)
+		{
+			Spectating = false;
+		}
+		return Spectating.GetHashCode();
+	}
+}

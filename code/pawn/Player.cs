@@ -47,6 +47,7 @@ public partial class Player : AnimatedEntity
 	[BindComponent] public PlayerController Controller { get; }
 	[BindComponent] public PlayerAnimator Animator { get; }
 	[BindComponent] public PlayerInventory Inventory { get; }
+	[BindComponent] public PlayerSpectator Spectator { get; }
 
 	public Ragdoll PlayerRagdoll { get; set; }
 	public ClothingContainer PlayerClothingContainer { get; set; }
@@ -74,6 +75,7 @@ public partial class Player : AnimatedEntity
 		Tags.Add( "livingplayer" );
 		EnableAllCollisions = true;
 		EnableDrawing = true;
+		Components.Remove( Spectator );
 		Components.Create<PlayerController>();
 		Components.Create<PlayerAnimator>();
 		Components.Create<PlayerInventory>();
@@ -85,6 +87,7 @@ public partial class Player : AnimatedEntity
 	{
 		DisablePlayer();
 		DeleteRagdoll();
+		Components.RemoveAll();
 	}
 
 	public void DeleteRagdoll()
@@ -118,6 +121,7 @@ public partial class Player : AnimatedEntity
 		ragdoll.PhysicsGroup.AddVelocity(LastAttackForce / 100);
 		PlayerClothingContainer.DressEntity( ragdoll );
 		PlayerRagdoll = ragdoll;
+		Components.Create<PlayerSpectator>();
 	}
 
 	public override void TakeDamage( DamageInfo info )
@@ -150,6 +154,7 @@ public partial class Player : AnimatedEntity
 		Controller?.Simulate( cl );
 		Animator?.Simulate();
 		Inventory?.Simulate( cl );
+		Spectator?.Simulate();
 		EyeLocalPosition = Vector3.Up * (64f * Scale);
 	}
 
@@ -174,10 +179,13 @@ public partial class Player : AnimatedEntity
 		ViewAngles = viewAngles.Normal;
 	}
 
-	bool IsThirdPerson { get; set; } = false;
-
 	public override void FrameSimulate( IClient cl )
 	{
+		if (Spectator != null)
+		{
+			Spectator.FrameSimulate(this);
+			return;
+		}
 		SimulateRotation();
 
 		Camera.Rotation = ViewAngles.ToRotation();
