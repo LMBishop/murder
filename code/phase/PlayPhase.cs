@@ -98,17 +98,23 @@ public class PlayPhase : BasePhase
 	[MurderEvent.Kill]
 	public void OnKill(Entity killer, Entity victim)
 	{
-		if (killer == null || killer is not Player || victim == null || victim is not Player )
+		if (killer is not Player && victim is not Player )
 		{
 			return;
 		}
 		Player victimPlayer = (Player)victim;
-		Player killerPlayer = (Player)killer;
-
 		Team victimTeam = victimPlayer.CurrentTeam;
-		Team killerTeam = killerPlayer.CurrentTeam;
-
 		victimPlayer.CurrentTeam = Team.Spectator;
+
+		if (killer == null)
+		{
+			Log.Info( victimPlayer + " died mysteriously" );
+			return;
+		}
+
+
+		Player killerPlayer = (Player)killer;
+		Team killerTeam = killerPlayer.CurrentTeam;
 
 		Log.Info( victimPlayer + " died to " + killerPlayer );
 

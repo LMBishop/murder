@@ -10,12 +10,19 @@ Health {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.90);
 }
-.fill {
+.colour-bar {
     height: 100%;
-    transition: width 0.2s ease-out;
+}
+.transition-bar {
+    height: 100%;
+    transition: width 1s ease-out 0.5s;
+	position: absolute;
+	top: 0;
+	left: 0;
 }
 </style>
-<div class="fill" style="background-color: @(Colour); width: @(GetHealth())%;"></div>
+<div class="transition-bar" style="background-color: white; width: @(GetHealth())%;"></div>
+<div class="colour-bar" style="background-color: @(Colour); width: @(GetHealth())%;"></div>
 
 @code
 {

@@ -36,8 +36,18 @@ public class PlayerController : EntityComponent<Player>
 		{
 			if ( !Grounded )
 			{
-				Entity.Velocity = Entity.Velocity.WithZ( 0 );
+				var zVel = Entity.Velocity.z;
 				AddEvent( "grounded" );
+				Entity.Velocity = Entity.Velocity.WithZ( 0 );
+
+				if (zVel < -500)
+				{
+					var damageInfo = DamageInfo.Generic( Math.Abs((float)(zVel * 0.05)) );
+					Entity.TakeDamage( damageInfo );
+					Entity.PlaySound( "fall" );
+					return;
+				}
+
 			}
 			var sprintMultiplier = TeamOperations.CanSprint( team ) ? (Input.Down( "run" ) ? 2.5f : 1f) : 1f;
 

@@ -52,19 +52,24 @@ public class WaitPhase : BasePhase
 					pawn.Transform = tx;
 				}
 
-				pawn.CurrentTeam = Team.Bystander;
 				pawn.Spawn();
-				pawn.Respawn();
+				RespawnPlayer( pawn );
 			} else
 			{
 				var pawn = (Player)client.Pawn;
-				if (pawn.LifeState == LifeState.Dead)
+				if (pawn.LifeState == LifeState.Dead && pawn.TimeSinceDeath > 3)
 				{
-					pawn.CurrentTeam = Team.Bystander;
-					pawn.Respawn();
+					RespawnPlayer( pawn );
 				}
 			}
 		}
+	}
+
+	private void RespawnPlayer(Player pawn)
+	{
+		pawn.CurrentTeam = Team.Spectator;
+		pawn.DressFromClient( pawn.Client );
+		pawn.Respawn();
 	}
 
 	public override void HandleClientJoin( ClientJoinedEvent e )
