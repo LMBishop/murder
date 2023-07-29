@@ -3,7 +3,12 @@
 namespace MurderGame;
 
 //TODO make spectatro a controller
-public class BaseController : EntityComponent<Player>
+public abstract class BaseController
 {
-	public Player Player { get; set; }
+	public virtual float SpeedMultiplier { get; set; } = 1;
+
+	public abstract void Simulate(Player player);
+
+	public abstract bool HasEvent(string eventName);
+
 }

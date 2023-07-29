@@ -18,6 +18,9 @@ public class PlayerController : EntityComponent<Player>
 
 	Vector3 LadderNormal;
 
+	TimeSince TimeSinceFootstep;
+	bool FootstepFoot;
+
 	bool Grounded => Entity.GroundEntity.IsValid();
 
 	public void Simulate( Player player )
@@ -43,13 +46,40 @@ public class PlayerController : EntityComponent<Player>
 				if (zVel < -500)
 				{
 					var damageInfo = DamageInfo.Generic( Math.Abs((float)(zVel * 0.05)) );
-					Entity.TakeDamage( damageInfo );
 					Entity.PlaySound( "fall" );
+					var trace = Trace.Ray( Entity.Position, Entity.Position + Vector3.Down * 20f )
+						.Radius( 1f )
+						.Ignore( Entity )
+						.Run();
+					if (trace.Hit)
+					{
+						trace.Surface.DoFootstep( Entity, trace, FootstepFoot ? 1 : 0, 70f );
+					}
+					Entity.TakeDamage( damageInfo );
 					return;
 				}
 
 			}
-			var sprintMultiplier = TeamOperations.CanSprint( team ) ? (Input.Down( "run" ) ? 2.5f : 1f) : 1f;
+			var isSprinting = TeamOperations.CanSprint( team ) && Input.Down( "run" );
+			var footstepTimeThreshold = isSprinting ? 0.2 : 0.3;
+
+			if (moveVector.Length > 0 && TimeSinceFootstep > footstepTimeThreshold)
+			{
+				var trace = Trace.Ray( Entity.Position, Entity.Position + Vector3.Down * 20f )
+					.Radius( 1f )
+					.Ignore( Entity )
+					.Run();
+
+				if (trace.Hit)
+				{
+					FootstepFoot = !FootstepFoot;
+
+					trace.Surface.DoFootstep( Entity, trace, FootstepFoot ? 1 : 0, 40f );
+
+					TimeSinceFootstep = 0;
+				}
+			}
+			var sprintMultiplier = (isSprinting ? 2.5f : 1f);
 
 			Entity.Velocity = Accelerate( Entity.Velocity, moveVector.Normal, moveVector.Length, SpeedMultiplier * 200.0f * sprintMultiplier, 7.5f );
 			Entity.Velocity = ApplyFriction( Entity.Velocity, 4.0f );
