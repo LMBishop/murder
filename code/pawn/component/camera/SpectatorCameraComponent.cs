@@ -38,4 +38,19 @@ public class SpectatorCameraComponent : BaseCameraComponent
 	{
 		return Game.Clients.Where(c => c.Pawn is Player player && player.CurrentTeam != Team.Spectator && player.LifeState == LifeState.Alive).ToList();
 	}
+
+	public override InventoryComponent GetObservedInventory()
+	{
+		return Target?.Inventory;
+	}
+	
+	public override float GetObservedHealth()
+	{
+		return Target?.Health ?? Entity.Health;
+	}
+
+	public override Team GetObservedTeam()
+	{
+		return Target?.CurrentTeam ?? Entity.CurrentTeam;
+	}
 }

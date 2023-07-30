@@ -26,12 +26,13 @@ playerinfo {
 {
     public string GetTeamColour()
     {
-        var ClientPawn = Game.LocalPawn;
-        if (ClientPawn is Player)
+        var clientPawn = Game.LocalPawn;
+        if (clientPawn is Player {Camera: not null } player)
         {
-            return TeamOperations.GetTeamColour(((Player)ClientPawn).CurrentTeam);
+	        var colour = TeamOperations.GetTeamColour(player.Camera.GetObservedTeam());
+	        return string.IsNullOrWhiteSpace(colour) ? "white" : colour;
         }
-        return "";
+        return "white";
     }
 
     protected override int BuildHash()

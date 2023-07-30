@@ -22,10 +22,10 @@
 
     public string GetTeamName()
     {
-        var ClientPawn = Game.LocalPawn;
-        if (ClientPawn is Player)
+        var clientPawn = Game.LocalPawn;
+        if (clientPawn is Player {Camera: not null } player)
         {
-            return TeamOperations.GetTeamName(((Player)ClientPawn).CurrentTeam);
+            return TeamOperations.GetTeamName(player.Camera.GetObservedTeam());
         }
         return "";
     }

@@ -30,10 +30,10 @@ Health {
 
     public int GetHealth()
     {
-        var ClientPawn = Game.LocalPawn;
-        if (ClientPawn is Player)
+        var clientPawn = Game.LocalPawn;
+        if (clientPawn is Player {Camera: not null } player)
         {
-            return ClientPawn.Health.CeilToInt();
+            return player.Camera.GetObservedHealth().CeilToInt();
         }
         return 0;
     }

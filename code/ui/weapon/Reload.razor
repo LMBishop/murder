@@ -60,11 +60,11 @@ reload {
 
 	protected override int BuildHash()
 	{
-		var localPawn = Game.LocalPawn;
-		if (localPawn is Player player)
+		var clientPawn = Game.LocalPawn;
+        if (clientPawn is Player {Camera: not null } player)
 		{
-			var inventory = player.Inventory;
-			if (inventory != null && inventory.GetCurrentWeapon() != null)
+			var inventory = player.Camera.GetObservedInventory();
+			if (inventory?.GetCurrentWeapon() != null)
 			{
 				var weapon = inventory.GetCurrentWeapon();
 				var ammo = weapon.Ammo;
