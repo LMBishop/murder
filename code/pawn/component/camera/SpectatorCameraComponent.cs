@@ -4,24 +4,35 @@ using System.Linq;
 
 namespace MurderGame;
 
-public class SpectatorCameraComponent : BaseCameraComponent
+public partial class SpectatorCameraComponent : BaseCameraComponent
 {
-	public Player Target { get; set; }
+	[Net] public Player Target { get; set; }
+	[Net] public int TargetIndex { get; set; }
 
 	public override void Simulate( IClient cl )
 	{
+		var targets = GetTargets();
+		if ( targets.Count == 0 )
+		{
+			Target = null;
+			return;
+		}
 		if (Target == null || !Target.IsValid() || Target.LifeState == LifeState.Dead)
 		{
-			var targets = GetTargets();
-			if ( targets.Count == 0 )
-			{
-				Target = null;
-				return;
-			}
-			var nextTarget = targets.First();
-			Target = (Player)nextTarget.Pawn;
+			FindNextTarget( targets, false );
+			return;
+		}
+
+		if ( Input.Released( "attack1" ) )
+		{
+			FindNextTarget( targets, false );
+		}
+		else if ( Input.Released( "attack2" ) )
+		{
+			FindNextTarget( targets, true );
 		}
 	}
+
 
 	public override void FrameSimulate( IClient cl )
 	{
@@ -38,7 +49,20 @@ public class SpectatorCameraComponent : BaseCameraComponent
 	{
 		return Game.Clients.Where(c => c.Pawn is Player player && player.CurrentTeam != Team.Spectator && player.LifeState == LifeState.Alive).ToList();
 	}
-
+	
+	private void FindNextTarget(List<IClient> targets, bool backwards)
+	{
+		if ( !backwards )
+		{
+			if ( ++TargetIndex >= targets.Count ) TargetIndex = 0;
+		} 
+		else {
+			if ( --TargetIndex < 0 ) TargetIndex = targets.Count - 1;
+		}
+		var nextTarget = targets[TargetIndex];
+		Target = (Player)nextTarget.Pawn;
+	}
+	
 	public override InventoryComponent GetObservedInventory()
 	{
 		return Target?.Inventory;
