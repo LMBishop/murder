@@ -15,43 +15,8 @@ public enum Team : ushort
 }
 
 // why are c# enums so bad
-public static class TeamOperations
+public static class TeamCapabilities
 {
-
-	public static string GetTeamName(Team team)
-	{
-		return team switch
-		{
-			Team.Detective => "Detective",
-			Team.Murderer => "Murderer",
-			Team.Bystander => "Bystander",
-			Team.Spectator => "Spectator",
-			_ => "None",
-		};
-	}
-
-	public static string GetTeamColour(Team team)
-	{
-		return team switch
-		{
-			Team.Detective => "#33A0FF",
-			Team.Murderer => "#FF4136",
-			Team.Bystander => "#33A0FF",
-			_ => "#AAAAAA",
-		};
-	}
-
-	public static string GetTeamDescription(Team team)
-	{
-		return team switch
-		{
-			Team.Detective => "There is a murderer on the loose! Find out who they are and shoot them before they kill everybody else.",
-			Team.Murderer => "Kill everybody else in time and avoid detection. At least one other player is armed.",
-			Team.Bystander => "There is a murderer on the loose! Avoid getting killed and work with others to establish who the murderer is.",
-			_ => "None",
-		};
-	}
-
 	public static bool CanSprint(Team team)
 	{
 		return team switch
@@ -87,5 +52,42 @@ public static class TeamOperations
 	private static void GiveMurdererWeapon(Player pawn)
 	{
 		pawn.Inventory.SetPrimaryWeapon( new Knife() );
+	}
+}
+public static class TeamOperations
+{
+
+	public static string GetTeamName(Team team)
+	{
+		return team switch
+		{
+			Team.Detective => "Detective",
+			Team.Murderer => "Murderer",
+			Team.Bystander => "Bystander",
+			Team.Spectator => "Spectator",
+			_ => "None",
+		};
+	}
+
+	public static string GetTeamColour(Team team)
+	{
+		return team switch
+		{
+			Team.Detective => "#33A0FF",
+			Team.Murderer => "#FF4136",
+			Team.Bystander => "#33A0FF",
+			_ => "#AAAAAA",
+		};
+	}
+
+	public static string GetTeamDescription(Team team)
+	{
+		return team switch
+		{
+			Team.Detective => "There is a murderer on the loose! Find out who they are and shoot them before they kill everybody else.",
+			Team.Murderer => "Kill everybody else in time and avoid detection. At least one other player is armed.",
+			Team.Bystander => "There is a murderer on the loose! Avoid getting killed and work with others to establish who the murderer is.",
+			_ => "None",
+		};
 	}
 }

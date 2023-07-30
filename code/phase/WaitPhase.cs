@@ -57,7 +57,7 @@ public class WaitPhase : BasePhase
 			} else
 			{
 				var pawn = (Player)client.Pawn;
-				if (pawn.LifeState == LifeState.Dead && pawn.TimeSinceDeath > 3)
+				if (pawn.LifeState == LifeState.Dead && pawn.TimeSinceDeath > 5)
 				{
 					RespawnPlayer( pawn );
 				}

@@ -4,11 +4,11 @@ using System.Linq;
 
 namespace MurderGame;
 
-public class PlayerSpectator : EntityComponent<Player>
+public class SpectatorCameraComponent : BaseCameraComponent
 {
 	public Player Target { get; set; }
 
-	public void Simulate()
+	public override void Simulate( IClient cl )
 	{
 		if (Target == null || !Target.IsValid() || Target.LifeState == LifeState.Dead)
 		{
@@ -23,11 +23,10 @@ public class PlayerSpectator : EntityComponent<Player>
 		}
 	}
 
-	public void FrameSimulate( Player player )
+	public override void FrameSimulate( IClient cl )
 	{
 		if ( Target == null || !Target.IsValid() || Target.LifeState == LifeState.Dead ) return;
 
-		// SimulateRotation(player);
 		Camera.Rotation = Target.EyeRotation;
 		Camera.FieldOfView = Screen.CreateVerticalFieldOfView( Game.Preferences.FieldOfView );
 
@@ -35,13 +34,7 @@ public class PlayerSpectator : EntityComponent<Player>
 		Camera.Position = Target.EyePosition;
 	}
 
-	protected void SimulateRotation(Player player)
-	{
-		player.EyeRotation = Target.ViewAngles.ToRotation();
-		player.Rotation = Target.ViewAngles.WithPitch( 0f ).ToRotation();
-	}
-
-	public List<IClient> GetTargets()
+	private List<IClient> GetTargets()
 	{
 		return Game.Clients.Where(c => c.Pawn is Player player && player.CurrentTeam != Team.Spectator && player.LifeState == LifeState.Alive).ToList();
 	}

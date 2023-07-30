@@ -29,7 +29,7 @@ public partial class DroppedWeapon : AnimatedEntity
 
 		MurderGame.Player player = (MurderGame.Player)other;
 
-		if ( player.Inventory == null || player.Inventory.PrimaryWeapon != null || !player.Inventory.AllowPickup) return;
+		if ( player.Inventory== null || player.Inventory.PrimaryWeapon != null || !player.Inventory.AllowPickup) return;
 
 		Weapon instance = TypeLibrary.Create<Weapon>( WeaponType );
 		instance.Ammo = Ammo;

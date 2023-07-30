@@ -43,16 +43,12 @@ spectator {
 	protected override int BuildHash()
 	{
 		var localPawn = Game.LocalPawn;
-		if (localPawn is Player player)
+		if (localPawn is Player player && player.Camera is SpectatorCameraComponent spectator)
 		{
-			var spectator = player.Spectator;
-			if (spectator != null)
-			{
-				var target = spectator.Target;
-				Spectating = true;
-				TargetName = (target != null && target.IsValid() && target.LifeState == LifeState.Alive) ? target.Client.Name : "";
-				return HashCode.Combine(Spectating.GetHashCode(), TargetName.GetHashCode());
-			}
+			var target = spectator.Target;
+			Spectating = true;
+			TargetName = (target != null && target.IsValid() && target.LifeState == LifeState.Alive) ? target.Client.Name : "";
+			return HashCode.Combine(Spectating.GetHashCode(), TargetName.GetHashCode());
 		}
 		if (Spectating)
 		{

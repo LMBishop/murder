@@ -25,7 +25,7 @@ public class PlayPhase : BasePhase
 				if (pawn.CurrentTeam != Team.Spectator)
 				{
 					pawn.Respawn();
-					TeamOperations.GiveLoadouts( pawn );
+					TeamCapabilities.GiveLoadouts( pawn );
 				}
 			}
 		}
@@ -50,8 +50,8 @@ public class PlayPhase : BasePhase
 		DeathOverlay.Hide( To.Single( entity ) );
 		if (entity is Player pawn && pawn.IsValid() )
 		{
-			if (pawn.Controller != null) pawn.Controller.SpeedMultiplier = 1;
-			if (pawn.Inventory != null) pawn.Inventory.AllowPickup = true;
+			if (pawn.Controller is WalkControllerComponent controller) controller.SpeedMultiplier = 1;
+			if (pawn.Inventory!= null) pawn.Inventory.AllowPickup = true;
 		}
 
 	}
@@ -126,14 +126,14 @@ public class PlayPhase : BasePhase
 
 			BlindedOverlay.Show( To.Single( killer ) );
 
-			if (killerPlayer.Controller != null) killerPlayer.Controller.SpeedMultiplier = 0.3f;
+			if (killerPlayer.Controller is WalkControllerComponent controller) controller.SpeedMultiplier = 0.3f;
 			if (killerPlayer.Inventory != null)
 			{
 				killerPlayer.Inventory.AllowPickup = false;
 				killerPlayer.Inventory.SpillContents(killerPlayer.EyePosition, killerPlayer.AimRay.Forward);
 			}
 
-			Blinded[killer] = 20 * Game.TickRate;
+			Blinded[killer] = 30 * Game.TickRate;
 		}
 		else if (victimTeam == Team.Murderer )
 		{

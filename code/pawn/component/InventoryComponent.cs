@@ -3,7 +3,7 @@ using System;
 
 namespace MurderGame;
 
-public partial class PlayerInventory : EntityComponent<Player> 
+public partial class InventoryComponent : EntityComponent<Player>, ISingletonComponent
 {
 	const int MIN_SLOT = 1;
 	const int MAX_SLOT = 2;

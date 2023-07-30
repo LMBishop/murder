@@ -44,10 +44,11 @@ public partial class Player : AnimatedEntity
 	[Net]
 	public Team CurrentTeam { get; set; }
 
-	[BindComponent] public PlayerController Controller { get; }
-	[BindComponent] public PlayerAnimator Animator { get; }
-	[BindComponent] public PlayerInventory Inventory { get; }
-	[BindComponent] public PlayerSpectator Spectator { get; }
+	public BaseCameraComponent Camera => Components.Get<BaseCameraComponent>();
+	public BaseControllerComponent Controller => Components.Get<BaseControllerComponent>();
+	[BindComponent] public AnimatorComponent Animator { get; }
+	[BindComponent] public InventoryComponent Inventory { get; }
+	[BindComponent] public FallDamageComponent FallDamage { get; }
 
 	[Net]
 	public Ragdoll PlayerRagdoll { get; set; }
@@ -87,9 +88,11 @@ public partial class Player : AnimatedEntity
 		EnableDrawing = true;
 
 		Components.RemoveAll();
-		Components.Create<PlayerController>();
-		Components.Create<PlayerAnimator>();
-		Components.Create<PlayerInventory>();
+		Components.Create<WalkControllerComponent>();
+		Components.Create<PlayerCameraComponent>();
+		Components.Create<AnimatorComponent>();
+		Components.Create<InventoryComponent>();
+		Components.Create<FallDamageComponent>();
 
 		Health = 100f;
 		LifeState = LifeState.Alive;
@@ -119,7 +122,6 @@ public partial class Player : AnimatedEntity
 		EnableDrawing = false;
 
 		Inventory?.Clear();
-		Components.RemoveAll();
 
 		LifeState = LifeState.Dead;
 	}
@@ -174,67 +176,31 @@ public partial class Player : AnimatedEntity
 		SimulateRotation();
 		TickPlayerUse();
 
-		Controller?.Simulate( this );
+		Controller?.Simulate( cl );
+		Camera?.Simulate( cl );
 		Animator?.Simulate();
 		Inventory?.Simulate( cl );
-		Spectator?.Simulate();
+		FallDamage?.Simulate( cl );
 
-		EyeLocalPosition = Vector3.Up * (64f * Scale);
-
-		if (Game.IsServer && Spectator == null && LifeState == LifeState.Dead && TimeSinceDeath > 3)
+		if (Game.IsServer && Camera is not SpectatorCameraComponent && LifeState == LifeState.Dead && TimeSinceDeath > 3.5)
 		{
-			Log.Info( "Spectator created" );
 			DeathOverlay.Hide( To.Single( Client ) );
-			Components.Create<PlayerSpectator>();
+			Components.RemoveAll();
+			Components.Create<SpectatorCameraComponent>();
 		}
 
 	}
 
 	public override void BuildInput()
 	{
-		InputDirection = Input.AnalogMove;
-
-		if ( Input.StopProcessing )
-			return;
-
-		var look = Input.AnalogLook;
-
-		if ( ViewAngles.pitch > 90f || ViewAngles.pitch < -90f )
-		{
-			look = look.WithYaw( look.yaw * -1f );
-		}
-
-		var viewAngles = ViewAngles;
-		viewAngles += look;
-		viewAngles.pitch = viewAngles.pitch.Clamp( -89f, 89f );
-		viewAngles.roll = 0f;
-		ViewAngles = viewAngles.Normal;
+		Controller?.BuildInput();
+		Camera?.BuildInput();
 	}
 
 	public override void FrameSimulate( IClient cl )
 	{
-		if (Spectator != null)
-		{
-			Spectator.FrameSimulate(this);
-			return;
-		}
-		else if (Controller != null)
-		{
-			//TOOD move below logic to controller
-		}
-		SimulateRotation();
-
-		Camera.Rotation = ViewAngles.ToRotation();
-		Camera.FieldOfView = Screen.CreateVerticalFieldOfView( Game.Preferences.FieldOfView );
-
-		Camera.FirstPersonViewer = this;
-		if (PlayerRagdoll != null && PlayerRagdoll.IsValid)
-		{ 
-			Camera.Position = PlayerRagdoll.Position;
-		} else
-		{
-			Camera.Position = EyePosition;
-		}
+		Controller?.FrameSimulate( cl );
+		Camera?.FrameSimulate( cl );
 	}
 
 	public TraceResult TraceBBox( Vector3 start, Vector3 end, float liftFeet = 0.0f )
