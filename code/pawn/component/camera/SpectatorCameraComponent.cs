@@ -80,7 +80,7 @@ public partial class SpectatorCameraComponent : BaseCameraComponent
 	
 	public override string GetObservedName()
 	{
-		var characterName = Entity.CharacterName;
+		var characterName = Target?.CharacterName ?? "";
 		return string.IsNullOrWhiteSpace( characterName ) ? (Target?.Client.Name ?? "Unknown") : characterName;
 	}
 	
