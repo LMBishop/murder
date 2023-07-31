@@ -47,7 +47,6 @@ public class AssignPhase : BasePhase
 		"#0074D9", // blue
 		"#7FDBFF", // aqua
 		"#39CCCC", // teal
-		"#B10DC9", // purple
 		"#F012BE", // fuchsia
 		"#FF4136", // red
 		"#FF851B", // orange
