@@ -1,0 +1,57 @@
+@using Sandbox;
+@using Sandbox.UI;
+@using System;
+
+@namespace MurderGame
+@inherits Panel
+
+<style>
+lookingatinfo {
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	position: absolute;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+}
+.box {
+	/* backdrop-filter-blur: 8px; 
+	 background-color: rgba(0, 0, 0, 0.20);
+	 padding: 10px;
+	 color: white; */
+	font-weight: 700;
+	font-size: 25px;
+	font-family: "Roboto";
+	margin-top: 60px;
+}
+.text {
+	text-shadow: 1px 1px 0px 0px rgba(0,0,0,0.75);
+}
+</style>
+
+<div class="box" style="color: @GetLookingAtColour()">
+	<span class="text">@GetLookingAtName()</span>
+</div>
+
+@code
+{
+	public string GetLookingAtName()
+	{
+		if (Game.LocalPawn is not Player player) return "";
+		return player.LookingAt is not { } lookingAt ? "" : lookingAt.CharacterName;
+	}
+	
+	public string GetLookingAtColour()
+	{
+		if (Game.LocalPawn is not Player player) return "white";
+		return player.LookingAt is not { } lookingAt ? "white" : lookingAt.HexColor;
+	}
+
+	protected override int BuildHash()
+	{
+		return GetLookingAtName().GetHashCode();
+	}
+}

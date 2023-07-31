@@ -60,6 +60,8 @@ public partial class Player : AnimatedEntity
 	[Net, Predicted]
 	public TimeSince TimeSinceDeath { get; set; } = 0;
 	
+	public Player LookingAt { get; set; }
+	
 	public override void Spawn()
 	{
 		SetModel( "models/citizen/citizen.vmdl" );
@@ -188,6 +190,29 @@ public partial class Player : AnimatedEntity
 			Components.Remove( FallDamage );
 			Components.Create<SpectatorCameraComponent>();
 		}
+
+		if ( Game.IsClient )
+		{
+			var start = AimRay.Position;
+			var end = AimRay.Position + AimRay.Forward * 5000;
+			
+			var trace = Trace.Ray( start, end )
+					.UseHitboxes()
+					.WithAnyTags( "solid", "livingplayer" )
+					.Ignore( this )
+					.Size( 1f );
+			
+			var tr = trace.Run();
+			if ( tr.Hit && tr.Entity.IsValid() && tr.Entity is Player player )
+			{
+				LookingAt = player;
+			}
+			else
+			{
+				LookingAt = null;
+			}
+		}
+			
 
 	}
 
