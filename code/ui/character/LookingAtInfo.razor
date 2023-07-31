@@ -41,13 +41,13 @@ lookingatinfo {
 	public string GetLookingAtName()
 	{
 		if (Game.LocalPawn is not Player player) return "";
-		return player.LookingAt is not { } lookingAt ? "" : lookingAt.CharacterName;
+		return player.LookingAt is not { } lookingAt ? "" : (lookingAt.CharacterName ?? lookingAt.Client.Name);
 	}
 	
 	public string GetLookingAtColour()
 	{
 		if (Game.LocalPawn is not Player player) return "white";
-		return player.LookingAt is not { } lookingAt ? "white" : lookingAt.HexColor;
+		return player.LookingAt is not { } lookingAt ? "white" : (string.IsNullOrWhiteSpace(lookingAt.HexColor) ? "white" : lookingAt.HexColor);
 	}
 
 	protected override int BuildHash()
