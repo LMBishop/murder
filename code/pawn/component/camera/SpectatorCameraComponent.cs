@@ -47,7 +47,7 @@ public partial class SpectatorCameraComponent : BaseCameraComponent
 
 	private List<IClient> GetTargets()
 	{
-		return Game.Clients.Where(c => c.Pawn is Player player && player.CurrentTeam != Team.Spectator && player.LifeState == LifeState.Alive).ToList();
+		return Game.Clients.Where(c => c.Pawn is Player player && player.Team != Team.Spectator && player.LifeState == LifeState.Alive).ToList();
 	}
 	
 	private void FindNextTarget(List<IClient> targets, bool backwards)
@@ -70,11 +70,22 @@ public partial class SpectatorCameraComponent : BaseCameraComponent
 	
 	public override float GetObservedHealth()
 	{
-		return Target?.Health ?? Entity.Health;
+		return Target?.Health ?? base.GetObservedHealth();
 	}
 
 	public override Team GetObservedTeam()
 	{
-		return Target?.CurrentTeam ?? Entity.CurrentTeam;
+		return Target?.Team ?? base.GetObservedTeam();
+	}
+	
+	public override string GetObservedName()
+	{
+		var characterName = Entity.CharacterName;
+		return string.IsNullOrWhiteSpace( characterName ) ? (Target?.Client.Name ?? "Unknown") : characterName;
+	}
+	
+	public override string GetObservedColour()
+	{
+		return Target?.HexColor ?? base.GetObservedColour();
 	}
 }

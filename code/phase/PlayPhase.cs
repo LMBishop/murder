@@ -20,16 +20,15 @@ public class PlayPhase : BasePhase
 		Event.Register(this);
 		foreach ( var client in Game.Clients )
 		{
-			if ( client.Pawn is Player pawn )
+			if ( client.Pawn is not Player pawn || pawn.Team == Team.Spectator )
 			{
-				if (pawn.CurrentTeam != Team.Spectator)
-				{
-					pawn.Respawn();
-					TeamCapabilities.GiveLoadouts( pawn );
-				}
+				continue;
 			}
+
+			pawn.Respawn();
+			TeamCapabilities.GiveLoadouts( pawn );
 		}
-		MurdererNames = string.Join( ',', Game.Clients.Where( c => ((Player)c.Pawn).CurrentTeam == Team.Murderer ).Select(c => c.Name));
+		MurdererNames = string.Join( ',', Game.Clients.Where( c => ((Player)c.Pawn).Team == Team.Murderer ).Select(c => c.Name));
 	}
 
 	public override void Deactivate()
@@ -48,11 +47,13 @@ public class PlayPhase : BasePhase
 		Log.Info( "Removing blind from " + entity.Name );
 		BlindedOverlay.Hide( To.Single( entity ) );
 		DeathOverlay.Hide( To.Single( entity ) );
-		if (entity is Player pawn && pawn.IsValid() )
+		if ( entity is not Player pawn || !pawn.IsValid() )
 		{
-			if (pawn.Controller is WalkControllerComponent controller) controller.SpeedMultiplier = 1;
-			if (pawn.Inventory!= null) pawn.Inventory.AllowPickup = true;
+			return;
 		}
+
+		if (pawn.Controller is WalkControllerComponent controller) controller.SpeedMultiplier = 1;
+		if (pawn.Inventory!= null) pawn.Inventory.AllowPickup = true;
 
 	}
 
@@ -64,8 +65,8 @@ public class PlayPhase : BasePhase
 			TriggerEndOfGame();
 			return;
 		}
-		bool bystandersAlive = Game.Clients.Any(c =>((Player)c.Pawn).CurrentTeam == Team.Bystander || ((Player)c.Pawn).CurrentTeam == Team.Detective);
-		bool murderersAlive = Game.Clients.Any(c =>((Player)c.Pawn).CurrentTeam == Team.Murderer);
+		var bystandersAlive = Game.Clients.Any(c =>((Player)c.Pawn).Team == Team.Bystander || ((Player)c.Pawn).Team == Team.Detective);
+		var murderersAlive = Game.Clients.Any(c =>((Player)c.Pawn).Team == Team.Murderer);
 		if (!bystandersAlive || !murderersAlive)
 		{
 			TriggerEndOfGame();
@@ -89,7 +90,7 @@ public class PlayPhase : BasePhase
 
 	public void TriggerEndOfGame()
 	{
-		bool bystandersWin = Game.Clients.Any(c =>((Player)c.Pawn).CurrentTeam == Team.Bystander || ((Player)c.Pawn).CurrentTeam == Team.Detective);
+		var bystandersWin = Game.Clients.Any(c =>((Player)c.Pawn).Team is Team.Bystander or Team.Detective);
 		ChatBox.Say( (bystandersWin ? "Bystanders" : "Murderers") +" win! The murderers were: " + MurdererNames );
 		base.NextPhase = new EndPhase();
 		base.IsFinished = true;
@@ -102,9 +103,9 @@ public class PlayPhase : BasePhase
 		{
 			return;
 		}
-		Player victimPlayer = (Player)victim;
-		Team victimTeam = victimPlayer.CurrentTeam;
-		victimPlayer.CurrentTeam = Team.Spectator;
+		var victimPlayer = (Player)victim;
+		var victimTeam = victimPlayer.Team;
+		victimPlayer.Team = Team.Spectator;
 
 		if (killer == null)
 		{
@@ -112,9 +113,8 @@ public class PlayPhase : BasePhase
 			return;
 		}
 
-
-		Player killerPlayer = (Player)killer;
-		Team killerTeam = killerPlayer.CurrentTeam;
+		var killerPlayer = (Player)killer;
+		var killerTeam = killerPlayer.Team;
 
 		Log.Info( victimPlayer + " died to " + killerPlayer );
 

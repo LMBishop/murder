@@ -1,3 +1,4 @@
+@using System
 @using Sandbox;
 @using Sandbox.UI;
 
@@ -7,8 +8,10 @@
 <style>
 playerinfo {
 	position: absolute;
-	left: 30px;
-	bottom: 30px;
+	width: 100vw;
+	height: 100vh;
+}
+.box {
 	background-color: rgba(0, 0, 0, 0.20);
 	backdrop-filter-blur: 8px;
 	display: flex;
@@ -17,26 +20,52 @@ playerinfo {
 	gap: 10px;
 	padding: 10px;
 }
+.playerinfo {
+	position: absolute;
+	left: 30px;
+	bottom: 30px;
+}
+.teaminfo {
+	position: absolute;
+	right: 30px;
+	bottom: 30px;
+}
 </style>
 
-<Health Colour="@GetTeamColour()"></Health>
-<TeamInfo Colour="@GetTeamColour()"></TeamInfo>
+<div class="playerinfo box">
+	<Health Colour="@GetCharacterColour()"></Health>
+	<NameInfo Colour="@GetCharacterColour()"></NameInfo>
+</div>
+<div class="teaminfo box">
+	<TeamInfo Colour="@GetTeamColour()"></TeamInfo>
+</div>
 
 @code
 {
-    public string GetTeamColour()
+    public string GetCharacterColour()
     {
         var clientPawn = Game.LocalPawn;
         if (clientPawn is Player {Camera: not null } player)
         {
-	        var colour = TeamOperations.GetTeamColour(player.Camera.GetObservedTeam());
+	        var colour = player.Camera.GetObservedColour();
 	        return string.IsNullOrWhiteSpace(colour) ? "white" : colour;
         }
         return "white";
     }
+	
+	public string GetTeamColour()
+	{
+		var clientPawn = Game.LocalPawn;
+		if (clientPawn is Player {Camera: not null } player)
+		{
+			var colour = TeamOperations.GetTeamColour(player.Camera.GetObservedTeam());
+			return string.IsNullOrWhiteSpace(colour) ? "white" : colour;
+		}
+		return "white";
+	}
 
     protected override int BuildHash()
     {
-        return GetTeamColour().GetHashCode();
+	    return HashCode.Combine(GetTeamColour().GetHashCode(), GetTeamColour().GetHashCode());
     }
 }

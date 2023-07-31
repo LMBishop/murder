@@ -20,16 +20,27 @@ public class BaseCameraComponent : EntityComponent<Player>, ISingletonComponent
 
 	public virtual InventoryComponent GetObservedInventory()
 	{
-		return null;
+		return Entity.Inventory;
 	}
 	
 	public virtual float GetObservedHealth()
 	{
-		return 0;
+		return Entity.Health;
 	}
 
 	public virtual Team GetObservedTeam()
 	{
-		return Team.Spectator;	
+		return Entity.Team;	
+	}
+	
+	public virtual string GetObservedName()
+	{
+		var characterName = Entity.CharacterName;
+		return string.IsNullOrWhiteSpace( characterName ) ? Entity.Client.Name : characterName;
+	}
+	
+	public virtual string GetObservedColour()
+	{
+		return Entity.HexColor;	
 	}
 }

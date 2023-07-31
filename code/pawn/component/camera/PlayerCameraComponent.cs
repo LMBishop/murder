@@ -43,21 +43,5 @@ public class PlayerCameraComponent : BaseCameraComponent
 		var pl = Entity as Player;
 		var viewAngles = (pl.ViewAngles + Input.AnalogLook).Normal;
 		pl.ViewAngles = viewAngles.WithPitch( viewAngles.pitch.Clamp( -89f, 89f ) );
-		return;
-	}
-	
-	public override InventoryComponent GetObservedInventory()
-	{
-		return Entity.Inventory;
-	}
-
-	public override float GetObservedHealth()
-	{
-		return Entity.Health;
-	}
-
-	public override Team GetObservedTeam()
-	{
-		return Entity.CurrentTeam;
 	}
 }

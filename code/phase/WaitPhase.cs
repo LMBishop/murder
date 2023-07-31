@@ -67,7 +67,7 @@ public class WaitPhase : BasePhase
 
 	private void RespawnPlayer(Player pawn)
 	{
-		pawn.CurrentTeam = Team.Spectator;
+		pawn.Team = Team.Spectator;
 		pawn.DressFromClient( pawn.Client );
 		pawn.Respawn();
 	}

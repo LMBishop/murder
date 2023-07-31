@@ -10,7 +10,7 @@ public partial class WalkControllerComponent : BaseControllerComponent
 	{
 		get
 		{
-			return TeamCapabilities.CanSprint( Entity.CurrentTeam );
+			return TeamCapabilities.CanSprint( Entity.Team );
 		}
 	}
 	[Net] public float SprintSpeed { get; set; } = 320.0f;

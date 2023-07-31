@@ -41,8 +41,6 @@ public partial class Player : AnimatedEntity
 		);
 	}
 
-	[Net]
-	public Team CurrentTeam { get; set; }
 
 	public BaseCameraComponent Camera => Components.Get<BaseCameraComponent>();
 	public BaseControllerComponent Controller => Components.Get<BaseControllerComponent>();
@@ -61,7 +59,7 @@ public partial class Player : AnimatedEntity
 
 	[Net, Predicted]
 	public TimeSince TimeSinceDeath { get; set; } = 0;
-
+	
 	public override void Spawn()
 	{
 		SetModel( "models/citizen/citizen.vmdl" );
@@ -87,7 +85,6 @@ public partial class Player : AnimatedEntity
 		EnableAllCollisions = true;
 		EnableDrawing = true;
 
-		Components.RemoveAll();
 		Components.Create<WalkControllerComponent>();
 		Components.Create<PlayerCameraComponent>();
 		Components.Create<AnimatorComponent>();
@@ -102,7 +99,6 @@ public partial class Player : AnimatedEntity
 	{
 		DisablePlayer();
 		DeleteRagdoll();
-		Components.RemoveAll();
 	}
 
 	public void DeleteRagdoll()
@@ -185,7 +181,11 @@ public partial class Player : AnimatedEntity
 		if (Game.IsServer && Camera is not SpectatorCameraComponent && LifeState == LifeState.Dead && TimeSinceDeath > 3.5)
 		{
 			DeathOverlay.Hide( To.Single( Client ) );
-			Components.RemoveAll();
+			Components.Remove( Controller );
+			Components.Remove( Camera );
+			Components.Remove( Animator );
+			Components.Remove( Inventory );
+			Components.Remove( FallDamage );
 			Components.Create<SpectatorCameraComponent>();
 		}
 

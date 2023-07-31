@@ -30,12 +30,14 @@ public static class TeamCapabilities
 	{
 		pawn.Inventory.Clear();
 		
-		switch (pawn.CurrentTeam)
+		switch (pawn.Team)
 		{
 			case Team.Detective:
 				GiveDetectiveWeapon(pawn); break;
 			case Team.Murderer:
 				GiveMurdererWeapon(pawn); break;
+			case Team.Spectator:
+			case Team.Bystander:
 			default: break;
 		}
 	}

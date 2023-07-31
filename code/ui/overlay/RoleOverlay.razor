@@ -54,7 +54,7 @@ roleoverlay
     {
         if (Game.LocalPawn is Player player)
         {
-            return TeamOperations.GetTeamName(player.CurrentTeam);
+            return TeamOperations.GetTeamName(player.Team);
         }
         return "";
     }
@@ -62,7 +62,7 @@ roleoverlay
     {
         if (Game.LocalPawn is Player player)
         {
-            return TeamOperations.GetTeamDescription(player.CurrentTeam);
+            return TeamOperations.GetTeamDescription(player.Team);
         }
         return "";
     }
@@ -70,7 +70,7 @@ roleoverlay
     {
         if (Game.LocalPawn is Player player)
         {
-            return TeamOperations.GetTeamColour(player.CurrentTeam);
+            return TeamOperations.GetTeamColour(player.Team);
         }
         return "";
     }

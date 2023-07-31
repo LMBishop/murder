@@ -13,25 +13,25 @@
 </style>
 
 <div class="team-info" style="color: @(Colour)">
-@GetTeamName()
+@GetName()
 </div>
 
 @code
 {
     public string Colour { get; set; }
 
-    public string GetTeamName()
+    public string GetName()
     {
         var clientPawn = Game.LocalPawn;
         if (clientPawn is Player {Camera: not null } player)
         {
-            return TeamOperations.GetTeamName(player.Camera.GetObservedTeam());
+            return player.Camera.GetObservedName();
         }
         return "";
     }
 
     protected override int BuildHash()
     {
-        return GetTeamName().GetHashCode();
+        return GetName().GetHashCode();
     }
 }
