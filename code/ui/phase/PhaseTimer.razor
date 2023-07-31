@@ -16,26 +16,24 @@ phasetimer {
     align-items: center;
 }
 .box {
-    background-color: rgba(0, 0, 0, 0.20);
-    backdrop-filter-blur: 8px;
-    padding: 5px;
     color: white;
     font-weight: 700;
-    font-size: 30px;
+    font-size: 25px;
     font-family: "Roboto";
+	text-shadow: 1px 1px 0 0 rgba(0,0,0,0.75);
 }
 </style>
 
 @if (HasTime())
 {
-<div class="box">
+<smallbox class="box">
     @GetTime()
-</div>
+</smallbox>
 } else
 {
-<div class="box">
+<smallbox class="box">
     @GetPhase()
-</div>
+</smallbox>
 }
 
 @code

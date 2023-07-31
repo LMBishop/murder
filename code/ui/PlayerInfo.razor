@@ -11,15 +11,6 @@ playerinfo {
 	width: 100vw;
 	height: 100vh;
 }
-.box {
-	background-color: rgba(0, 0, 0, 0.20);
-	backdrop-filter-blur: 8px;
-	display: flex;
-	align-items: center;
-	flex-direction: row;
-	gap: 10px;
-	padding: 10px;
-}
 .playerinfo {
 	position: absolute;
 	left: 30px;
@@ -32,13 +23,13 @@ playerinfo {
 }
 </style>
 
-<div class="playerinfo box">
+<box class="playerinfo">
 	<Health Colour="@GetCharacterColour()"></Health>
 	<NameInfo Colour="@GetCharacterColour()"></NameInfo>
-</div>
-<div class="teaminfo box">
+</box>
+<box class="teaminfo">
 	<TeamInfo Colour="@GetTeamColour()"></TeamInfo>
-</div>
+</box>
 
 @code
 {

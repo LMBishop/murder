@@ -18,14 +18,11 @@ lookingatinfo {
 	flex-direction: column;
 }
 .box {
-	backdrop-filter-blur: 8px; 
-	background-color: rgba(0, 0, 0, 0.10);
-	padding: 5px;
-	color: white;
 	font-weight: 700;
 	font-size: 20px;
 	font-family: "Roboto";
 	margin-top: 100px;
+	text-shadow: 1px 1px 0 0 rgba(0,0,0,0.75);
 }
 .text {
 	/* text-shadow: 1px 1px 0px 0px rgba(0,0,0,0.75); */
@@ -34,9 +31,9 @@ lookingatinfo {
 
 @if (GetLookingAtName() != "")
 {
-<div class="box" style="color: @GetLookingAtColour()">
+<smallbox class="box" style="color: @GetLookingAtColour()">
 	<span class="text">@GetLookingAtName()</span>
-</div>
+</smallbox>
 }
 
 @code
