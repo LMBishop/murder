@@ -92,8 +92,8 @@ public partial class AssignPhase : BasePhase
 				pawn.Team = Team.Spectator;
 				continue;
 			}
-			pawn.DressFromClient( client );
-			
+			pawn.Dress(  );
+
 			// re-use names and colours if needed
 			if (natoNamesRemaining.Count == 0)
 			{

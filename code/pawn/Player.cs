@@ -169,6 +169,16 @@ public partial class Player : AnimatedEntity
 		PlayerClothingContainer.LoadFromClient( cl );
 		PlayerClothingContainer.DressEntity( this );
 	}
+	
+	public void Dress()
+	{
+		PlayerClothingContainer = new ClothingContainer();
+		var trousers = new Clothing() { Model = "models/citizen_clothes/trousers/cargopants/models/cargo_pants.vmdl" };
+		var tshirt = new Clothing() { Model = "models/citizen_clothes/shirt/Tshirt/Models/tshirt.vmdl" };
+		PlayerClothingContainer.Clothing.Add( trousers );
+		PlayerClothingContainer.Clothing.Add( tshirt );
+		PlayerClothingContainer.DressEntity( this );
+	}
 
 	public override void Simulate( IClient cl )
 	{
