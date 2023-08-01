@@ -47,6 +47,7 @@ public partial class Player : AnimatedEntity
 	[BindComponent] public AnimatorComponent Animator { get; }
 	[BindComponent] public InventoryComponent Inventory { get; }
 	[BindComponent] public FallDamageComponent FallDamage { get; }
+	[BindComponent] public FootprintTrackerComponent FootprintTracker { get; }
 
 	[Net]
 	public Ragdoll PlayerRagdoll { get; set; }
@@ -179,6 +180,7 @@ public partial class Player : AnimatedEntity
 		Animator?.Simulate();
 		Inventory?.Simulate( cl );
 		FallDamage?.Simulate( cl );
+		FootprintTracker?.Simulate( cl );
 
 		if (Game.IsServer && Camera is not SpectatorCameraComponent && LifeState == LifeState.Dead && TimeSinceDeath > 3.5)
 		{

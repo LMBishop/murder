@@ -54,6 +54,7 @@ public static class TeamCapabilities
 	private static void GiveMurdererWeapon(Player pawn)
 	{
 		pawn.Inventory.SetPrimaryWeapon( new Knife() );
+		pawn.Components.Create<FootprintTrackerComponent>();
 	}
 }
 public static class TeamOperations

@@ -3,11 +3,10 @@ using Sandbox.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http.Headers;
 
 namespace MurderGame;
 
-public class AssignPhase : BasePhase
+public partial class AssignPhase : BasePhase
 {
 	public override string Title => "Assigning teams";
 	public int TicksElapsed;
@@ -42,18 +41,18 @@ public class AssignPhase : BasePhase
 		"Zulu"
 	};
 	
-	private List<string> HexColours = new()
+	private List<uint> Colors = new()
 	{
-		"#0074D9", // blue
-		"#7FDBFF", // aqua
-		"#39CCCC", // teal
-		"#F012BE", // fuchsia
-		"#FF4136", // red
-		"#FF851B", // orange
-		"#FFDC00", // yellow
-		"#3D9970", // olive
-		"#2ECC40", // lime
-		"#01FF70"  // green
+		0x0074D9, // blue
+		0x7FDBFF, // aqua
+		0x39CCCC, // teal
+		0xF012BE, // fuchsia
+		0xFF4136, // red
+		0xFF851B, // orange
+		0xFFDC00, // yellow
+		0x3D9970, // olive
+		0x2ECC40, // lime
+		0x01FF70  // green
 	};
 
 	public override void Activate()
@@ -63,17 +62,18 @@ public class AssignPhase : BasePhase
 		{
 			entity.Delete();
 		}
+		DeleteFootprints();
 		// cleanup -- end
 
 		var detectivesNeeded = 1;
 		var murderersNeeded = 1;
 		
-		Random random = new();
+		Random random = new(Guid.NewGuid().GetHashCode());
 		
 		var spawnPoints = Entity.All.OfType<SpawnPoint>().OrderBy( _ => random.Next() ).ToList();
 		var clients = Game.Clients.ToList().OrderBy( _ => random.Next() );
 		var natoNamesRemaining = new List<string>(NatoNames.OrderBy( _ => random.Next() ));
-		var coloursRemaining = new List<string>(HexColours.OrderBy( _ => random.Next() ));
+		var colorsRemaining = new List<uint>(Colors.OrderBy( _ => random.Next() ));
 
 		foreach ( var client in clients )
 		{
@@ -99,9 +99,9 @@ public class AssignPhase : BasePhase
 			{
 				natoNamesRemaining = new List<string>(NatoNames);
 			}
-			if (coloursRemaining.Count == 0)
+			if (colorsRemaining.Count == 0)
 			{
-				coloursRemaining = new List<string>(HexColours);
+				colorsRemaining = new List<uint>(Colors);
 			}
 
 			// assign team
@@ -134,13 +134,22 @@ public class AssignPhase : BasePhase
 			pawn.CharacterName = natoName;
 			
 			// assign nato name
-			var hexColour = coloursRemaining[0];
-			coloursRemaining.RemoveAt( 0 );
-			pawn.HexColor = hexColour;
+			var hexColor = colorsRemaining[0];
+			colorsRemaining.RemoveAt( 0 );
+			pawn.Color = Color.FromRgb(hexColor);
 
 			RoleOverlay.Show( To.Single( client ) );
 		}
 		base.TimeLeft = 5;
+	}
+
+	[ClientRpc]
+	public static void DeleteFootprints()
+	{
+		foreach (var entity in Entity.All.OfType<Footprint>())
+		{
+			entity.Delete();
+		}
 	}
 
 	public override void Deactivate()

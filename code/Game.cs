@@ -23,14 +23,17 @@ public partial class MurderGame : Sandbox.GameManager
 	}
 
 
-	[ConVar.Server( "mm_min_players", Help = "The minimum number of players required to start a round." )]
+	[ConVar.Server( "mu_min_players", Help = "The minimum number of players required to start a round." )]
 	public static int MinPlayers { get; set; } = 2;
 
-	[ConVar.Server( "mm_allow_suicide", Help = "Allow players to kill themselves during a round." )]
+	[ConVar.Server( "mu_allow_suicide", Help = "[INOP] Allow players to kill themselves during a round." )]
 	public static bool AllowSuicide { get; set; } = true;
 
-	[ConVar.Server( "mm_round_time", Help = "The amount of time in a round." )]
+	[ConVar.Server( "mu_round_time", Help = "The amount of time, in seconds, in a round." )]
 	public static int RoundTime { get; set; } = 600;
+	
+	[ConVar.Client( "mu_max_footprint_time", Help = "The amount of time, in seconds, footprints are visible for. Max 30 seconds." )]
+	public static int MaxFootprintTime { get; set; } = 30;
 
 	[Net]
 	public BasePhase CurrentPhase { get; set; } = new WaitPhase() { CountIn = true };
