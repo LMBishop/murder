@@ -10,11 +10,11 @@ It currently uses assets from the base game, [Sandbox](https://github.com/Facepu
 
 To-do:
 
-- Murderer's ability to see footsteps.
+- ~~Murderer's ability to see footsteps.~~ Done
 - Murderer's ability to throw knife.
 - Most sound effects.
 - Most weapon effects (though they do work).
-- Spectator mode.
+- ~~Spectator mode.~~ Done
 - The whole clue system thing that nobody really cared about.
 - De-shittify code.
 
