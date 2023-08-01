@@ -37,6 +37,7 @@ public partial class Pistol : Weapon
 	public override void Reload()
 	{
 		ReloadEffects();
+		Pawn?.SetAnimParameter( "b_reload", true );
 	}
 
 	[ClientRpc]

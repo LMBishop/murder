@@ -171,7 +171,7 @@ public partial class Weapon : AnimatedEntity
 		var pos = ray.Position;
 		bool hit = false;
 
-		foreach (var tr in TraceBullet(pos, pos + forward * 50, 20))
+		foreach (var tr in TraceBullet(pos, pos + forward * 80, 20))
 		{
 			tr.Surface.DoBulletImpact(tr);
 			hit = true;
@@ -202,6 +202,7 @@ public partial class Weapon : AnimatedEntity
 		vm.Model = Model.Load( ViewModelPath );
 		vm.Owner = Owner;
 		vm.Parent = Game.LocalPawn;
+		vm.SetAnimParameter( "deploy", true );
 		ViewModelEntity = vm;
 		if (!string.IsNullOrEmpty(HandsModelPath))
 		{
