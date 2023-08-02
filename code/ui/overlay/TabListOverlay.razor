@@ -1,0 +1,142 @@
+<!-- this class is temporary and will be replaced with a proper scoreboard -->
+
+@using System.Collections.Generic
+@using System.Linq
+@using Sandbox;
+@using Sandbox.UI;
+
+@namespace MurderGame
+@inherits Panel
+
+<style>
+tablistoverlay {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	width: 100vw;
+	height: 100vh;
+	z-index: 99;
+}
+.container {
+	width: 40%;
+	height: 60%;
+	background-color: rgba(0, 0, 0, 0.2);
+	backdrop-filter-blur: 32px;
+	padding: 10px;
+	color: white;
+	font-family: "Roboto";
+	font-weight: 700;
+	text-shadow: 1px 1px 0 0 rgba(0,0,0,0.75);
+	
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+.tablist-header {
+	flex-direction: column;
+}
+.text-header {
+	font-size: 35px;
+}
+.text-aside {
+	font-size: 20px;
+}
+.list {
+	width: 100%;
+	
+	display: flex;
+	flex-direction: column;
+}
+.list-header {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	
+	font-size: 25px;
+	margin-bottom: 2px;
+	border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+	padding-bottom: 2px;
+}
+.list-content {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 5px;	
+	font-size: 25px;
+	color: #DDDDDD;
+}
+.entry {
+	flex-direction: row;
+	justify-content: space-between;
+}
+</style>
+
+<div class="container">
+	<div class="tablist-header">
+		<span class="text-header">Murder</span>
+		<span class="text-aside" style="color: #FF4136">This game mode is still a work in progress. Source code available at https://github.com/LMBishop/murder.</span>
+	</div>
+
+	<div class="list">
+		<div class="list-header">
+			<span class="name">Name</span>
+			<span class="ping">Ping</span>
+		</div>
+
+		<div class="list-content" @ref="List">
+
+		</div>
+	</div>
+</div>
+
+@code
+{
+    Dictionary<IClient, TabListEntry> Entries = new();
+		
+    public Panel List { get; set; }
+
+    public static TabListOverlay Instance { get; private set; }
+
+    public TabListOverlay()
+    {
+        Instance = this;
+    }
+
+    public bool IsOpen => Input.Down( "score" );
+
+    public override void Tick()
+    {
+        base.Tick();
+
+        SetClass( "hidden", !IsOpen );
+
+        if ( !IsVisible )
+            return;
+
+        foreach ( IClient cl in Game.Clients.Except( Entries.Keys ) )
+        {
+            TabListEntry entry = new();
+            Entries.Add(cl, entry);
+            entry.UpdateFrom(cl);
+		    entry.Parent = List;
+        }
+
+        foreach ( IClient cl in Entries.Keys.Except( Game.Clients ) )
+        {
+            if( Entries.TryGetValue( cl, out var entry ) )
+            {
+                entry.Delete();
+                Entries.Remove( cl );
+            }
+        }
+	    
+	    // foreach ( var entry in Entries )
+	    // {
+		//     entry.Value.Parent = List;
+	    // }
+    }
+
+}
