@@ -1,13 +1,11 @@
-﻿
+﻿using System;
+using System.Linq;
 using Sandbox;
 using Sandbox.UI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace MurderGame;
 
-public partial class MurderGame : Sandbox.GameManager
+public partial class MurderGame : GameManager
 {
 	public MurderGame()
 	{
@@ -17,10 +15,7 @@ public partial class MurderGame : Sandbox.GameManager
 		}
 	}
 
-	public static MurderGame Instance
-	{
-		get => Current as MurderGame;
-	}
+	public static MurderGame Instance => Current as MurderGame;
 
 
 	[ConVar.Server( "mu_min_players", Help = "The minimum number of players required to start a round." )]
@@ -31,23 +26,23 @@ public partial class MurderGame : Sandbox.GameManager
 
 	[ConVar.Server( "mu_round_time", Help = "The amount of time, in seconds, in a round." )]
 	public static int RoundTime { get; set; } = 600;
-	
-	[ConVar.Client( "mu_max_footprint_time", Help = "The amount of time, in seconds, footprints are visible for. Max 30 seconds." )]
+
+	[ConVar.Client( "mu_max_footprint_time",
+		Help = "The amount of time, in seconds, footprints are visible for. Max 30 seconds." )]
 	public static int MaxFootprintTime { get; set; } = 30;
 
-	[Net]
-	public BasePhase CurrentPhase { get; set; } = new WaitPhase() { CountIn = true };
+	[Net] public BasePhase CurrentPhase { get; set; } = new WaitPhase { CountIn = true };
 
 	[GameEvent.Tick.Server]
 	public void TickServer()
 	{
 		CurrentPhase.Tick();
-		
-		if (CurrentPhase.NextPhase != null && CurrentPhase.IsFinished)
+
+		if ( CurrentPhase.NextPhase != null && CurrentPhase.IsFinished )
 		{
 			CurrentPhase.Deactivate();
 			CurrentPhase = CurrentPhase.NextPhase;
-			Log.Info("Advancing phase to " + CurrentPhase.ToString());
+			Log.Info( "Advancing phase to " + CurrentPhase );
 			CurrentPhase.Activate();
 		}
 	}
@@ -61,7 +56,7 @@ public partial class MurderGame : Sandbox.GameManager
 		client.Pawn = pawn;
 		pawn.Spawn();
 
-		var spawnpoints = Entity.All.OfType<SpawnPoint>();
+		var spawnpoints = All.OfType<SpawnPoint>();
 		var randomSpawnPoint = spawnpoints.OrderBy( x => Guid.NewGuid() ).FirstOrDefault();
 		if ( randomSpawnPoint != null )
 		{
@@ -75,9 +70,8 @@ public partial class MurderGame : Sandbox.GameManager
 
 	public override void ClientDisconnect( IClient client, NetworkDisconnectionReason reason )
 	{
-		base.ClientDisconnect(client, reason );
+		base.ClientDisconnect( client, reason );
 
-		ChatBox.Say( client.Name + " left the game (" + reason.ToString() + ")" );
+		ChatBox.Say( client.Name + " left the game (" + reason + ")" );
 	}
 }
-

@@ -1,9 +1,6 @@
-@using Sandbox;
-@using Sandbox.UI;
-@using System;
-
 @namespace MurderGame
-@inherits Panel
+@using Sandbox
+@inherits Sandbox.UI.Panel
 
 <style>
 lookingatinfo {
@@ -31,27 +28,27 @@ lookingatinfo {
 
 @if (GetLookingAtName() != "")
 {
-<smallbox class="box" style="color: @GetLookingAtColour()">
-	<span class="text">@GetLookingAtName()</span>
-</smallbox>
+    <smallbox class="box" style="color: @GetLookingAtColour()">
+        <span class="text">@GetLookingAtName()</span>
+    </smallbox>
 }
 
 @code
 {
-	public string GetLookingAtName()
-	{
-		if (Game.LocalPawn is not Player player) return "";
-		return player.LookingAt is not { } lookingAt ? "" : (lookingAt.CharacterName ?? lookingAt.Client.Name);
-	}
-	
-	public string GetLookingAtColour()
-	{
-		if (Game.LocalPawn is not Player player) return "white";
-		return player.LookingAt is not { } lookingAt ? "white" : (string.IsNullOrWhiteSpace(lookingAt.HexColor) ? "white" : lookingAt.HexColor);
-	}
+    public string GetLookingAtName()
+    {
+        if (Game.LocalPawn is not Player player) return "";
+        return player.LookingAt is not { } lookingAt ? "" : lookingAt.CharacterName ?? lookingAt.Client.Name;
+    }
 
-	protected override int BuildHash()
-	{
-		return GetLookingAtName().GetHashCode();
-	}
+    public string GetLookingAtColour()
+    {
+        if (Game.LocalPawn is not Player player) return "white";
+        return player.LookingAt is not { } lookingAt ? "white" : string.IsNullOrWhiteSpace(lookingAt.HexColor) ? "white" : lookingAt.HexColor;
+    }
+
+    protected override int BuildHash()
+    {
+        return GetLookingAtName().GetHashCode();
+    }
 }

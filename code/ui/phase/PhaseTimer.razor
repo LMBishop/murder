@@ -1,9 +1,6 @@
-@using Sandbox;
-@using System
-@using Sandbox.UI;
-
 @namespace MurderGame
-@inherits Panel
+@using System
+@inherits Sandbox.UI.Panel
 
 <style>
 phasetimer {
@@ -26,14 +23,15 @@ phasetimer {
 
 @if (HasTime())
 {
-<smallbox class="box">
-    @GetTime()
-</smallbox>
-} else
+    <smallbox class="box">
+        @GetTime()
+    </smallbox>
+}
+else
 {
-<smallbox class="box">
-    @GetPhase()
-</smallbox>
+    <smallbox class="box">
+        @GetPhase()
+    </smallbox>
 }
 
 @code
@@ -42,11 +40,13 @@ phasetimer {
     {
         return MurderGame.Instance.CurrentPhase.TimeLeft >= 0;
     }
+
     public string GetTime()
     {
-        TimeSpan timeSpan = TimeSpan.FromSeconds(MurderGame.Instance.CurrentPhase.TimeLeft);
+        var timeSpan = TimeSpan.FromSeconds(MurderGame.Instance.CurrentPhase.TimeLeft);
         return timeSpan.ToString(@"mm\:ss");
     }
+
     public string GetPhase()
     {
         return MurderGame.Instance.CurrentPhase.Title;

@@ -2,22 +2,24 @@
 
 namespace MurderGame;
 
-public partial class FallDamageComponent : EntityComponent<Player>, ISingletonComponent
+public class FallDamageComponent : EntityComponent<Player>, ISingletonComponent
 {
-	float PreviousZVelocity = 0;
-	const float LethalFallSpeed = 1024;
-	const float SafeFallSpeed = 580;
-	const float DamageForSpeed = (float)100 / (LethalFallSpeed - SafeFallSpeed); // damage per unit per second.
+	private const float LethalFallSpeed = 1024;
+	private const float SafeFallSpeed = 580;
+	private const float DamageForSpeed = 100 / (LethalFallSpeed - SafeFallSpeed); // damage per unit per second.
+	private float PreviousZVelocity;
+
 	public void Simulate( IClient cl )
 	{
 		var FallSpeed = -PreviousZVelocity;
-		if ( FallSpeed > (SafeFallSpeed * Entity.Scale) && Entity.GroundEntity != null )
+		if ( FallSpeed > SafeFallSpeed * Entity.Scale && Entity.GroundEntity != null )
 		{
-			var FallDamage = (FallSpeed - (SafeFallSpeed * Entity.Scale)) * (DamageForSpeed * Entity.Scale);
+			var FallDamage = (FallSpeed - SafeFallSpeed * Entity.Scale) * (DamageForSpeed * Entity.Scale);
 			var info = DamageInfo.Generic( FallDamage ).WithTag( "fall" );
 			Entity.TakeDamage( info );
 			Entity.PlaySound( "fall" );
 		}
+
 		PreviousZVelocity = Entity.Velocity.z;
 	}
 }

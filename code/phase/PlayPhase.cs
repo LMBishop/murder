@@ -1,23 +1,21 @@
-﻿using Sandbox;
-using Sandbox.UI;
-using System;
-using System.Buffers;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using Sandbox;
+using Sandbox.UI;
 
 namespace MurderGame;
 
 public class PlayPhase : BasePhase
 {
-	public override string Title => "Play";
 	public IDictionary<Entity, int> Blinded = new Dictionary<Entity, int>();
 	public int TicksElapsed;
+	public override string Title => "Play";
 	private string MurdererNames { get; set; }
 
 	public override void Activate()
 	{
-		base.TimeLeft = MurderGame.RoundTime;
-		Event.Register(this);
+		TimeLeft = MurderGame.RoundTime;
+		Event.Register( this );
 		foreach ( var client in Game.Clients )
 		{
 			if ( client.Pawn is not Player pawn || pawn.Team == Team.Spectator )
@@ -28,21 +26,24 @@ public class PlayPhase : BasePhase
 			pawn.Respawn();
 			TeamCapabilities.GiveLoadouts( pawn );
 		}
-		MurdererNames = string.Join( ',', Game.Clients.Where( c => ((Player)c.Pawn).Team == Team.Murderer ).Select(c => c.Name));
+
+		MurdererNames = string.Join( ',',
+			Game.Clients.Where( c => ((Player)c.Pawn).Team == Team.Murderer ).Select( c => c.Name ) );
 	}
 
 	public override void Deactivate()
 	{
-		base.TimeLeft = MurderGame.RoundTime;
-		Event.Unregister(this);
-		foreach(var item in Blinded)
+		TimeLeft = MurderGame.RoundTime;
+		Event.Unregister( this );
+		foreach ( var item in Blinded )
 		{
 			ClearDebuffs( item.Key );
 		}
+
 		Blinded.Clear();
 	}
 
-	public void ClearDebuffs(Entity entity )
+	public void ClearDebuffs( Entity entity )
 	{
 		Log.Info( "Removing blind from " + entity.Name );
 		BlindedOverlay.Hide( To.Single( entity ) );
@@ -52,30 +53,38 @@ public class PlayPhase : BasePhase
 			return;
 		}
 
-		if (pawn.Controller is WalkControllerComponent controller) controller.SpeedMultiplier = 1;
-		if (pawn.Inventory!= null) pawn.Inventory.AllowPickup = true;
+		if ( pawn.Controller is WalkControllerComponent controller )
+		{
+			controller.SpeedMultiplier = 1;
+		}
 
+		if ( pawn.Inventory != null )
+		{
+			pawn.Inventory.AllowPickup = true;
+		}
 	}
 
 	public override void Tick()
 	{
 		++TicksElapsed;
-		if (base.TimeLeft != -1 && TicksElapsed % Game.TickRate == 0 && --base.TimeLeft == 0)
+		if ( TimeLeft != -1 && TicksElapsed % Game.TickRate == 0 && --TimeLeft == 0 )
 		{
 			TriggerEndOfGame();
 			return;
 		}
-		var bystandersAlive = Game.Clients.Any(c =>((Player)c.Pawn).Team == Team.Bystander || ((Player)c.Pawn).Team == Team.Detective);
-		var murderersAlive = Game.Clients.Any(c =>((Player)c.Pawn).Team == Team.Murderer);
-		if (!bystandersAlive || !murderersAlive)
+
+		var bystandersAlive = Game.Clients.Any( c =>
+			((Player)c.Pawn).Team == Team.Bystander || ((Player)c.Pawn).Team == Team.Detective );
+		var murderersAlive = Game.Clients.Any( c => ((Player)c.Pawn).Team == Team.Murderer );
+		if ( !bystandersAlive || !murderersAlive )
 		{
 			TriggerEndOfGame();
 		}
 
-		foreach(var item in Blinded)
+		foreach ( var item in Blinded )
 		{
 			var blindLeft = item.Value - 1;
-			if (blindLeft < 0)
+			if ( blindLeft < 0 )
 			{
 				Blinded.Remove( item.Key );
 				ClearDebuffs( item.Key );
@@ -90,24 +99,25 @@ public class PlayPhase : BasePhase
 
 	public void TriggerEndOfGame()
 	{
-		var bystandersWin = Game.Clients.Any(c =>((Player)c.Pawn).Team is Team.Bystander or Team.Detective);
-		ChatBox.Say( (bystandersWin ? "Bystanders" : "Murderers") +" win! The murderers were: " + MurdererNames );
-		base.NextPhase = new EndPhase();
-		base.IsFinished = true;
+		var bystandersWin = Game.Clients.Any( c => ((Player)c.Pawn).Team is Team.Bystander or Team.Detective );
+		ChatBox.Say( (bystandersWin ? "Bystanders" : "Murderers") + " win! The murderers were: " + MurdererNames );
+		NextPhase = new EndPhase();
+		IsFinished = true;
 	}
 
 	[MurderEvent.Kill]
-	public void OnKill(Entity killer, Entity victim)
+	public void OnKill( Entity killer, Entity victim )
 	{
-		if (killer is not Player && victim is not Player )
+		if ( killer is not Player && victim is not Player )
 		{
 			return;
 		}
+
 		var victimPlayer = (Player)victim;
 		var victimTeam = victimPlayer.Team;
 		victimPlayer.Team = Team.Spectator;
 
-		if (killer == null)
+		if ( killer == null )
 		{
 			Log.Info( victimPlayer + " died mysteriously" );
 			return;
@@ -118,28 +128,31 @@ public class PlayPhase : BasePhase
 
 		Log.Info( victimPlayer + " died to " + killerPlayer );
 
-		if (victimTeam != Team.Murderer && killerTeam != Team.Murderer) 
+		if ( victimTeam != Team.Murderer && killerTeam != Team.Murderer )
 		{
-			Log.Info( killerPlayer + " shot a bystander");
+			Log.Info( killerPlayer + " shot a bystander" );
 
 			ChatBox.Say( killerPlayer.Client.Name + " killed an innocent bystander" );
 
 			BlindedOverlay.Show( To.Single( killer ) );
 
-			if (killerPlayer.Controller is WalkControllerComponent controller) controller.SpeedMultiplier = 0.3f;
-			if (killerPlayer.Inventory != null)
+			if ( killerPlayer.Controller is WalkControllerComponent controller )
+			{
+				controller.SpeedMultiplier = 0.3f;
+			}
+
+			if ( killerPlayer.Inventory != null )
 			{
 				killerPlayer.Inventory.AllowPickup = false;
-				killerPlayer.Inventory.SpillContents(killerPlayer.EyePosition, killerPlayer.AimRay.Forward);
+				killerPlayer.Inventory.SpillContents( killerPlayer.EyePosition, killerPlayer.AimRay.Forward );
 			}
 
 			Blinded[killer] = 30 * Game.TickRate;
 		}
-		else if (victimTeam == Team.Murderer )
+		else if ( victimTeam == Team.Murderer )
 		{
-			Log.Info( killerPlayer + " killed a murderer");
+			Log.Info( killerPlayer + " killed a murderer" );
 			ChatBox.Say( killerPlayer.Client.Name + " killed a murderer" );
 		}
 	}
-
 }

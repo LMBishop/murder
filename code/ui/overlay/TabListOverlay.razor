@@ -1,11 +1,10 @@
 <!-- this class is temporary and will be replaced with a proper scoreboard -->
 
+@namespace MurderGame
 @using System.Collections.Generic
 @using System.Linq
-@using Sandbox;
-@using Sandbox.UI;
-
-@namespace MurderGame
+@using Sandbox
+@using Sandbox.UI
 @inherits Panel
 
 <style>
@@ -75,27 +74,27 @@ tablistoverlay {
 </style>
 
 <div class="container">
-	<div class="tablist-header">
-		<span class="text-header">Murder</span>
-		<span class="text-aside" style="color: #FF4136">This game mode is still a work in progress. Source code available at https://github.com/LMBishop/murder.</span>
-	</div>
+    <div class="tablist-header">
+        <span class="text-header">Murder</span>
+        <span class="text-aside" style="color: #FF4136">This game mode is still a work in progress. Source code available at https://github.com/LMBishop/murder.</span>
+    </div>
 
-	<div class="list">
-		<div class="list-header">
-			<span class="name">Name</span>
-			<span class="ping">Ping</span>
-		</div>
+    <div class="list">
+        <div class="list-header">
+            <span class="name">Name</span>
+            <span class="ping">Ping</span>
+        </div>
 
-		<div class="list-content" @ref="List">
+        <div class="list-content" @ref="List">
 
-		</div>
-	</div>
+        </div>
+    </div>
 </div>
 
 @code
 {
-    Dictionary<IClient, TabListEntry> Entries = new();
-		
+    readonly Dictionary<IClient, TabListEntry> Entries = new();
+
     public Panel List { get; set; }
 
     public static TabListOverlay Instance { get; private set; }
@@ -105,38 +104,38 @@ tablistoverlay {
         Instance = this;
     }
 
-    public bool IsOpen => Input.Down( "score" );
+    public bool IsOpen => Input.Down("score");
 
     public override void Tick()
     {
         base.Tick();
 
-        SetClass( "hidden", !IsOpen );
+        SetClass("hidden", !IsOpen);
 
-        if ( !IsVisible )
+        if (!IsVisible)
             return;
 
-        foreach ( IClient cl in Game.Clients.Except( Entries.Keys ) )
+        foreach (var cl in Game.Clients.Except(Entries.Keys))
         {
             TabListEntry entry = new();
             Entries.Add(cl, entry);
             entry.UpdateFrom(cl);
-		    entry.Parent = List;
+            entry.Parent = List;
         }
 
-        foreach ( IClient cl in Entries.Keys.Except( Game.Clients ) )
+        foreach (var cl in Entries.Keys.Except(Game.Clients))
         {
-            if( Entries.TryGetValue( cl, out var entry ) )
+            if (Entries.TryGetValue(cl, out var entry))
             {
                 entry.Delete();
-                Entries.Remove( cl );
+                Entries.Remove(cl);
             }
         }
-	    
-	    // foreach ( var entry in Entries )
-	    // {
-		//     entry.Value.Parent = List;
-	    // }
+
+    // foreach ( var entry in Entries )
+    // {
+    //     entry.Value.Parent = List;
+    // }
     }
 
 }

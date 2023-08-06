@@ -9,7 +9,10 @@ public partial class Player
 	protected virtual void TickPlayerUse()
 	{
 		// This is serverside only
-		if ( !Game.IsServer ) return;
+		if ( !Game.IsServer )
+		{
+			return;
+		}
 
 		// Turn prediction off
 		using ( Prediction.Off() )
@@ -32,7 +35,9 @@ public partial class Player
 			}
 
 			if ( !Using.IsValid() )
+			{
 				return;
+			}
 
 			// If we move too far away or something we should probably ClearUse()?
 
@@ -40,15 +45,17 @@ public partial class Player
 			// If use returns true then we can keep using it
 			//
 			if ( Using is IUse use && use.OnUse( this ) )
+			{
 				return;
+			}
 
 			StopUsing();
 		}
 	}
 
 	/// <summary>
-	/// Player tried to use something but there was nothing there.
-	/// Tradition is to give a disappointed boop.
+	///     Player tried to use something but there was nothing there.
+	///     Tradition is to give a disappointed boop.
 	/// </summary>
 	protected virtual void UseFail()
 	{
@@ -56,7 +63,7 @@ public partial class Player
 	}
 
 	/// <summary>
-	/// If we're using an entity, stop using it
+	///     If we're using an entity, stop using it
 	/// </summary>
 	protected virtual void StopUsing()
 	{
@@ -64,19 +71,30 @@ public partial class Player
 	}
 
 	/// <summary>
-	/// Returns if the entity is a valid usable entity
+	///     Returns if the entity is a valid usable entity
 	/// </summary>
 	protected bool IsValidUseEntity( Entity e )
 	{
-		if ( e == null ) return false;
-		if ( e is not IUse use ) return false;
-		if ( !use.IsUsable( this ) ) return false;
+		if ( e == null )
+		{
+			return false;
+		}
+
+		if ( e is not IUse use )
+		{
+			return false;
+		}
+
+		if ( !use.IsUsable( this ) )
+		{
+			return false;
+		}
 
 		return true;
 	}
 
 	/// <summary>
-	/// Find a usable entity for this player to use
+	///     Find a usable entity for this player to use
 	/// </summary>
 	protected virtual Entity FindUsable()
 	{
@@ -96,9 +114,9 @@ public partial class Player
 		if ( !IsValidUseEntity( ent ) )
 		{
 			tr = Trace.Ray( EyePosition, EyePosition + EyeRotation.Forward * 85 )
-			.Radius( 2 )
-			.Ignore( this )
-			.Run();
+				.Radius( 2 )
+				.Ignore( this )
+				.Run();
 
 			// See if any of the parent entities are usable if we ain't.
 			ent = tr.Entity;
@@ -109,9 +127,11 @@ public partial class Player
 		}
 
 		// Still no good? Bail.
-		if ( !IsValidUseEntity( ent ) ) return null;
+		if ( !IsValidUseEntity( ent ) )
+		{
+			return null;
+		}
 
 		return ent;
 	}
 }
-

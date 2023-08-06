@@ -1,9 +1,7 @@
-@using System
-@using Sandbox;
-@using Sandbox.UI;
-
 @namespace MurderGame
-@inherits Panel
+@using System
+@using Sandbox
+@inherits Sandbox.UI.Panel
 
 <style>
 playerinfo {
@@ -24,11 +22,11 @@ playerinfo {
 </style>
 
 <box class="playerinfo">
-	<Health Colour="@GetCharacterColour()"></Health>
-	<NameInfo Colour="@GetCharacterColour()"></NameInfo>
+    <Health Colour="@GetCharacterColour()"></Health>
+    <NameInfo Colour="@GetCharacterColour()"></NameInfo>
 </box>
 <box class="teaminfo">
-	<TeamInfo Colour="@GetTeamColour()"></TeamInfo>
+    <TeamInfo Colour="@GetTeamColour()"></TeamInfo>
 </box>
 
 @code
@@ -38,25 +36,25 @@ playerinfo {
         var clientPawn = Game.LocalPawn;
         if (clientPawn is Player {Camera: not null } player)
         {
-	        var colour = player.Camera.GetObservedColour();
-	        return string.IsNullOrWhiteSpace(colour) ? "white" : colour;
+            var colour = player.Camera.GetObservedColour();
+            return string.IsNullOrWhiteSpace(colour) ? "white" : colour;
         }
         return "white";
     }
-	
-	public string GetTeamColour()
-	{
-		var clientPawn = Game.LocalPawn;
-		if (clientPawn is Player {Camera: not null } player)
-		{
-			var colour = TeamOperations.GetTeamColour(player.Camera.GetObservedTeam());
-			return string.IsNullOrWhiteSpace(colour) ? "white" : colour;
-		}
-		return "white";
-	}
+
+    public string GetTeamColour()
+    {
+        var clientPawn = Game.LocalPawn;
+        if (clientPawn is Player {Camera: not null } player)
+        {
+            var colour = TeamOperations.GetTeamColour(player.Camera.GetObservedTeam());
+            return string.IsNullOrWhiteSpace(colour) ? "white" : colour;
+        }
+        return "white";
+    }
 
     protected override int BuildHash()
     {
-	    return HashCode.Combine(GetTeamColour().GetHashCode(), GetTeamColour().GetHashCode());
+        return HashCode.Combine(GetTeamColour().GetHashCode(), GetTeamColour().GetHashCode());
     }
 }

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MurderGame;
+﻿namespace MurderGame;
 
 public enum Team : ushort
 {
@@ -17,25 +11,27 @@ public enum Team : ushort
 // why are c# enums so bad
 public static class TeamCapabilities
 {
-	public static bool CanSprint(Team team)
+	public static bool CanSprint( Team team )
 	{
 		return team switch
 		{
 			Team.Murderer => true,
-			_ => false,
+			_ => false
 		};
 	}
-	
-	public static void GiveLoadouts(Player pawn)
+
+	public static void GiveLoadouts( Player pawn )
 	{
 		pawn.Inventory.Clear();
-		
-		switch (pawn.Team)
+
+		switch ( pawn.Team )
 		{
 			case Team.Detective:
-				GiveDetectiveWeapon(pawn); break;
+				GiveDetectiveWeapon( pawn );
+				break;
 			case Team.Murderer:
-				GiveMurdererWeapon(pawn); break;
+				GiveMurdererWeapon( pawn );
+				break;
 			case Team.Spectator:
 			case Team.Bystander:
 			default: break;
@@ -44,23 +40,20 @@ public static class TeamCapabilities
 
 	private static void GiveDetectiveWeapon( Player pawn )
 	{
-		Pistol pistol = new()
-		{
-			Ammo = 1
-		};
+		Pistol pistol = new() { Ammo = 1 };
 		pawn.Inventory.SetPrimaryWeapon( pistol );
 	}
 
-	private static void GiveMurdererWeapon(Player pawn)
+	private static void GiveMurdererWeapon( Player pawn )
 	{
 		pawn.Inventory.SetPrimaryWeapon( new Knife() );
 		pawn.Components.Create<FootprintTrackerComponent>();
 	}
 }
+
 public static class TeamOperations
 {
-
-	public static string GetTeamName(Team team)
+	public static string GetTeamName( Team team )
 	{
 		return team switch
 		{
@@ -68,29 +61,31 @@ public static class TeamOperations
 			Team.Murderer => "Murderer",
 			Team.Bystander => "Bystander",
 			Team.Spectator => "Spectator",
-			_ => "None",
+			_ => "None"
 		};
 	}
 
-	public static string GetTeamColour(Team team)
+	public static string GetTeamColour( Team team )
 	{
 		return team switch
 		{
 			Team.Detective => "#33A0FF",
 			Team.Murderer => "#FF4136",
 			Team.Bystander => "#33A0FF",
-			_ => "#AAAAAA",
+			_ => "#AAAAAA"
 		};
 	}
 
-	public static string GetTeamDescription(Team team)
+	public static string GetTeamDescription( Team team )
 	{
 		return team switch
 		{
-			Team.Detective => "There is a murderer on the loose! Find out who they are and shoot them before they kill everybody else.",
+			Team.Detective =>
+				"There is a murderer on the loose! Find out who they are and shoot them before they kill everybody else.",
 			Team.Murderer => "Kill everybody else in time and avoid detection. At least one other player is armed.",
-			Team.Bystander => "There is a murderer on the loose! Avoid getting killed and work with others to establish who the murderer is.",
-			_ => "None",
+			Team.Bystander =>
+				"There is a murderer on the loose! Avoid getting killed and work with others to establish who the murderer is.",
+			_ => "None"
 		};
 	}
 }

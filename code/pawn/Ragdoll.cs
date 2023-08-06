@@ -1,6 +1,6 @@
 ﻿using Sandbox;
 
-public partial class Ragdoll : AnimatedEntity
+public class Ragdoll : AnimatedEntity
 {
 	public Ragdoll()
 	{

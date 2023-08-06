@@ -6,14 +6,13 @@ namespace MurderGame;
 
 public class TabListEntry : Panel
 {
-	
 	public IClient Client;
+	public Label Ping;
 
 	public Label PlayerName;
-	public Label Ping;
-	
-	RealTimeSince TimeSinceUpdate = 0;
-	
+
+	private RealTimeSince TimeSinceUpdate = 0;
+
 	public TabListEntry()
 	{
 		AddClass( "entry" );
@@ -27,28 +26,33 @@ public class TabListEntry : Panel
 		base.Tick();
 
 		if ( !IsVisible )
+		{
 			return;
+		}
 
 		if ( !Client.IsValid() )
+		{
 			return;
+		}
 
 		if ( TimeSinceUpdate < 0.1f )
+		{
 			return;
+		}
 
 		TimeSinceUpdate = 0;
 		UpdateData();
 	}
-	
+
 	public virtual void UpdateData()
 	{
 		PlayerName.Text = Client.Name;
 		Ping.Text = Client.Ping.ToString();
 	}
-	
+
 	public virtual void UpdateFrom( IClient client )
 	{
 		Client = client;
 		UpdateData();
 	}
-	
 }

@@ -1,11 +1,10 @@
-@using System
-@using Sandbox;
-@using Sandbox.UI;
-@using Sandbox.Menu;
 @attribute [StyleSheet]
-@inherits RootPanel
+@inherits Sandbox.UI.RootPanel
 @namespace DmMenu
-@implements Sandbox.Menu.ILoadingScreenPanel
+@using Sandbox
+@using Sandbox.Menu
+@using Sandbox.UI
+@implements ILoadingScreenPanel
 
 <root class="loadingpanel">
 
@@ -16,8 +15,10 @@
     {
         <div class="progress">
             <div class="bar" style="width: @(Progress.Percent)%;"></div>
-            <div class="text-left">@(Progress.Percent.ToString("0") )%</div>
-            <div class="text-right"><span>@(Progress.Mbps.ToString("0"))</span><span class="unit">Mbps</span></div>
+            <div class="text-left">@(Progress.Percent.ToString("0"))%</div>
+            <div class="text-right">
+                <span>@(Progress.Mbps.ToString("0"))</span><span class="unit">Mbps</span>
+            </div>
         </div>
     }
 
@@ -33,7 +34,7 @@
 {
     public LoadingProgress Progress;
 
-    public void OnLoadingProgress( LoadingProgress progress )
+    public void OnLoadingProgress(LoadingProgress progress)
     {
         Progress = progress;
         StateHasChanged();

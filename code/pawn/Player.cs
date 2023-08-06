@@ -1,16 +1,13 @@
-﻿using Sandbox;
-using Sandbox.UI;
-using System.ComponentModel;
+﻿using System.ComponentModel;
+using Sandbox;
 
 namespace MurderGame;
 
 public partial class Player : AnimatedEntity
 {
-	[ClientInput]
-	public Vector3 InputDirection { get; set; }
-	
-	[ClientInput]
-	public Angles ViewAngles { get; set; }
+	[ClientInput] public Vector3 InputDirection { get; set; }
+
+	[ClientInput] public Angles ViewAngles { get; set; }
 
 	[Browsable( false )]
 	public Vector3 EyePosition
@@ -19,8 +16,7 @@ public partial class Player : AnimatedEntity
 		set => EyeLocalPosition = Transform.PointToLocal( value );
 	}
 
-	[Net, Predicted, Browsable( false )]
-	public Vector3 EyeLocalPosition { get; set; }
+	[Net] [Predicted] [Browsable( false )] public Vector3 EyeLocalPosition { get; set; }
 
 	[Browsable( false )]
 	public Rotation EyeRotation
@@ -29,17 +25,14 @@ public partial class Player : AnimatedEntity
 		set => EyeLocalRotation = Transform.RotationToLocal( value );
 	}
 
-	[Net, Predicted, Browsable( false )]
-	public Rotation EyeLocalRotation { get; set; }
+	[Net] [Predicted] [Browsable( false )] public Rotation EyeLocalRotation { get; set; }
 
-	public BBox Hull
-	{
-		get => new
+	public BBox Hull =>
+		new
 		(
 			new Vector3( -16, -16, 0 ),
 			new Vector3( 16, 16, 72 )
 		);
-	}
 
 
 	public BaseCameraComponent Camera => Components.Get<BaseCameraComponent>();
@@ -49,20 +42,19 @@ public partial class Player : AnimatedEntity
 	[BindComponent] public FallDamageComponent FallDamage { get; }
 	[BindComponent] public FootprintTrackerComponent FootprintTracker { get; }
 
-	[Net]
-	public Ragdoll PlayerRagdoll { get; set; }
+	[Net] public Ragdoll PlayerRagdoll { get; set; }
+
 	public ClothingContainer PlayerClothingContainer { get; set; }
 
 	public Vector3 LastAttackForce { get; set; }
 	public int LastHitBone { get; set; }
 
-	public override Ray AimRay => new Ray( EyePosition, EyeRotation.Forward );
+	public override Ray AimRay => new(EyePosition, EyeRotation.Forward);
 
-	[Net, Predicted]
-	public TimeSince TimeSinceDeath { get; set; } = 0;
-	
+	[Net] [Predicted] public TimeSince TimeSinceDeath { get; set; } = 0;
+
 	public Player LookingAt { get; set; }
-	
+
 	public override void Spawn()
 	{
 		SetModel( "models/citizen/citizen.vmdl" );
@@ -106,7 +98,7 @@ public partial class Player : AnimatedEntity
 
 	public void DeleteRagdoll()
 	{
-		if (PlayerRagdoll != null)
+		if ( PlayerRagdoll != null )
 		{
 			PlayerRagdoll.Delete();
 			PlayerRagdoll = null;
@@ -129,17 +121,17 @@ public partial class Player : AnimatedEntity
 	{
 		TimeSinceDeath = 0;
 
-		Inventory?.SpillContents(EyePosition, new Vector3(0,0,0));
+		Inventory?.SpillContents( EyePosition, new Vector3( 0, 0, 0 ) );
 
 		DisablePlayer();
-		
+
 		Event.Run( MurderEvent.Kill, LastAttacker, this );
 
 		var ragdoll = new Ragdoll();
 		ragdoll.Position = Position;
 		ragdoll.Rotation = Rotation;
-		ragdoll.CopyFrom(this);
-		ragdoll.PhysicsGroup.AddVelocity(LastAttackForce / 100);
+		ragdoll.CopyFrom( this );
+		ragdoll.PhysicsGroup.AddVelocity( LastAttackForce / 100 );
 		PlayerClothingContainer.DressEntity( ragdoll );
 		PlayerRagdoll = ragdoll;
 
@@ -152,10 +144,10 @@ public partial class Player : AnimatedEntity
 		LastAttackerWeapon = info.Weapon;
 		LastAttackForce = info.Force;
 		LastHitBone = info.BoneIndex;
-		if (Game.IsServer && Health > 0f && LifeState == LifeState.Alive)
+		if ( Game.IsServer && Health > 0f && LifeState == LifeState.Alive )
 		{
 			Health -= info.Damage;
-			if (Health <= 0f)
+			if ( Health <= 0f )
 			{
 				Health = 0f;
 				OnKilled();
@@ -169,12 +161,12 @@ public partial class Player : AnimatedEntity
 		PlayerClothingContainer.LoadFromClient( cl );
 		PlayerClothingContainer.DressEntity( this );
 	}
-	
+
 	public void Dress()
 	{
 		PlayerClothingContainer = new ClothingContainer();
-		var trousers = new Clothing() { Model = "models/citizen_clothes/trousers/cargopants/models/cargo_pants.vmdl" };
-		var tshirt = new Clothing() { Model = "models/citizen_clothes/shirt/Tshirt/Models/tshirt.vmdl" };
+		var trousers = new Clothing { Model = "models/citizen_clothes/trousers/cargopants/models/cargo_pants.vmdl" };
+		var tshirt = new Clothing { Model = "models/citizen_clothes/shirt/Tshirt/Models/tshirt.vmdl" };
 		PlayerClothingContainer.Clothing.Add( trousers );
 		PlayerClothingContainer.Clothing.Add( tshirt );
 		PlayerClothingContainer.DressEntity( this );
@@ -192,7 +184,8 @@ public partial class Player : AnimatedEntity
 		FallDamage?.Simulate( cl );
 		FootprintTracker?.Simulate( cl );
 
-		if (Game.IsServer && Camera is not SpectatorCameraComponent && LifeState == LifeState.Dead && TimeSinceDeath > 3.5)
+		if ( Game.IsServer && Camera is not SpectatorCameraComponent && LifeState == LifeState.Dead &&
+		     TimeSinceDeath > 3.5 )
 		{
 			DeathOverlay.Hide( To.Single( Client ) );
 			Components.Remove( Controller );
@@ -207,13 +200,13 @@ public partial class Player : AnimatedEntity
 		{
 			var start = AimRay.Position;
 			var end = AimRay.Position + AimRay.Forward * 5000;
-			
+
 			var trace = Trace.Ray( start, end )
-					.UseHitboxes()
-					.WithAnyTags( "solid", "livingplayer" )
-					.Ignore( this )
-					.Size( 1f );
-			
+				.UseHitboxes()
+				.WithAnyTags( "solid", "livingplayer" )
+				.Ignore( this )
+				.Size( 1f );
+
 			var tr = trace.Run();
 			if ( tr.Hit && tr.Entity.IsValid() && tr.Entity is Player player )
 			{
@@ -224,8 +217,6 @@ public partial class Player : AnimatedEntity
 				LookingAt = null;
 			}
 		}
-			
-
 	}
 
 	public override void BuildInput()
@@ -254,10 +245,10 @@ public partial class Player : AnimatedEntity
 		}
 
 		var tr = Trace.Ray( start, end )
-					.Size( mins, maxs )
-					.WithAnyTags( "solid", "player", "passbullets" )
-					.Ignore( this )
-					.Run();
+			.Size( mins, maxs )
+			.WithAnyTags( "solid", "player", "passbullets" )
+			.Ignore( this )
+			.Run();
 
 		return tr;
 	}
@@ -267,5 +258,4 @@ public partial class Player : AnimatedEntity
 		EyeRotation = ViewAngles.ToRotation();
 		Rotation = ViewAngles.WithPitch( 0f ).ToRotation();
 	}
-
 }

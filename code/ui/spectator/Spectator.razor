@@ -1,9 +1,7 @@
-@using Sandbox;
-@using Sandbox.UI;
-@using System;
-
 @namespace MurderGame
-@inherits Panel
+@using System
+@using Sandbox
+@inherits Sandbox.UI.Panel
 
 <style>
 spectator {
@@ -29,31 +27,32 @@ spectator {
 }
 </style>
 
-@if (Spectating) {
-<div class="box">
-	<div>Spectating @TargetName</div>
-</div>
+@if (Spectating)
+{
+    <div class="box">
+        <div>Spectating @TargetName</div>
+    </div>
 }
 
 @code
 {
-	public bool Spectating { get; set; }
-	public string TargetName { get; set; }
+    public bool Spectating { get; set; }
+    public string TargetName { get; set; }
 
-	protected override int BuildHash()
-	{
-		var localPawn = Game.LocalPawn;
-		if (localPawn is Player player && player.Camera is SpectatorCameraComponent spectator)
-		{
-			var target = spectator.Target;
-			Spectating = true;
-			TargetName = (target != null && target.IsValid() && target.LifeState == LifeState.Alive) ? target.Client.Name : "";
-			return HashCode.Combine(Spectating.GetHashCode(), TargetName.GetHashCode());
-		}
-		if (Spectating)
-		{
-			Spectating = false;
-		}
-		return Spectating.GetHashCode();
-	}
+    protected override int BuildHash()
+    {
+        var localPawn = Game.LocalPawn;
+        if (localPawn is Player player && player.Camera is SpectatorCameraComponent spectator)
+        {
+            var target = spectator.Target;
+            Spectating = true;
+            TargetName = target != null && target.IsValid() && target.LifeState == LifeState.Alive ? target.Client.Name : "";
+            return HashCode.Combine(Spectating.GetHashCode(), TargetName.GetHashCode());
+        }
+        if (Spectating)
+        {
+            Spectating = false;
+        }
+        return Spectating.GetHashCode();
+    }
 }

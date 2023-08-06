@@ -1,9 +1,6 @@
-
-@using Sandbox;
-@using Sandbox.UI;
-
 @namespace MurderGame
-@inherits Panel
+@using Sandbox
+@inherits Sandbox.UI.Panel
 
 <style>
 roleoverlay
@@ -58,6 +55,7 @@ roleoverlay
         }
         return "";
     }
+
     public string GetTeamDescription()
     {
         if (Game.LocalPawn is Player player)
@@ -66,6 +64,7 @@ roleoverlay
         }
         return "";
     }
+
     public string GetTeamColour()
     {
         if (Game.LocalPawn is Player player)
@@ -81,7 +80,7 @@ roleoverlay
 
     public RoleOverlay()
     {
-        SetClass( "hidden", true );
+        SetClass("hidden", true);
 
         Instance = this;
     }

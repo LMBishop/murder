@@ -1,18 +1,48 @@
-﻿using Sandbox;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Sandbox;
 
 namespace MurderGame;
 
 public partial class WalkControllerComponent : BaseControllerComponent
 {
-	public bool CanSprint
-	{
-		get
-		{
-			return TeamCapabilities.CanSprint( Entity.Team );
-		}
-	}
+	public Transform? GroundTransform;
+
+	public Transform? GroundTransformViewAngles;
+
+	private bool IsTouchingLadder;
+	private Vector3 LadderNormal;
+
+	private Vector3 LastNonZeroWishLadderVelocity;
+	private Vector3 LastNonZeroWishVelocity;
+	public Vector3 maxs;
+
+
+	// Duck body height 32
+	// Eye Height 64
+	// Duck Eye Height 28
+
+	public Vector3 mins;
+	public Entity? OldGroundEntity;
+	private Transform OldTransform;
+	[SkipHotload] private Dictionary<int, Transform> OldTransforms;
+
+	private Entity PreviousGroundEntity;
+	public Angles? PreviousViewAngles;
+	private readonly bool PushDebug = false;
+
+	protected float SurfaceFriction;
+
+	/// <summary>
+	///     Any bbox traces we do will be offset by this amount.
+	///     todo: this needs to be predicted
+	/// </summary>
+	public Vector3 TraceOffset;
+
+	private int TryLatchNextTickCounter;
+
+	public bool CanSprint => TeamCapabilities.CanSprint( Entity.Team );
+
 	[Net] public float SprintSpeed { get; set; } = 320.0f;
 	[Net] public float WalkSpeed { get; set; } = 150.0f;
 	[Net] public float CrouchSpeed { get; set; } = 80.0f;
@@ -37,62 +67,76 @@ public partial class WalkControllerComponent : BaseControllerComponent
 	[Net] public float Gravity { get; set; } = 800.0f;
 	[Net] public float AirControl { get; set; } = 30.0f;
 	[Net] public float SpeedMultiplier { get; set; } = 1f;
-	[ConVar.Replicated( "walkcontroller_showbbox" )] public bool ShowBBox { get; set; } = false;
-	public bool Swimming { get; set; } = false;
+
+	[ConVar.Replicated( "walkcontroller_showbbox" )]
+	public bool ShowBBox { get; set; } = false;
+
+	public bool Swimming { get; set; }
 	[Net] public bool AutoJump { get; set; } = false;
 	public TimeSince TimeSinceFootstep { get; set; }
 	public bool FootstepFoot { get; set; }
 
-	public WalkControllerComponent()
-	{
-	}
+	[Net] [Predicted] public bool IsDucking { get; set; } // replicate
+	[Net] [Predicted] public float DuckAmount { get; set; }
+	public float LocalDuckAmount { get; set; }
+	protected float WaterJumpTime { get; set; }
+	protected Vector3 WaterJumpVelocity { get; set; }
+	protected bool IsJumpingFromWater => WaterJumpTime > 0;
+	protected TimeSince TimeSinceSwimSound { get; set; }
+	protected float LastWaterLevel { get; set; }
+
+	public virtual float WaterJumpHeight => 8;
+
+	[ConVar.Replicated( "sv_ladderlatchdebug" )]
+	public static bool LatchDebug { get; set; } = false;
+
+	public Vector3 GroundNormal { get; set; }
 
 	/// <summary>
-	/// This is temporary, get the hull size for the player's collision
+	///     This is temporary, get the hull size for the player's collision
 	/// </summary>
 	public BBox GetHull()
 	{
 		var girth = BodyGirth * 0.5f;
 		var height = BodyHeight;
-		if ( IsDucking ) height = 32;
+		if ( IsDucking )
+		{
+			height = 32;
+		}
+
 		var mins = new Vector3( -girth, -girth, 0 );
 		var maxs = new Vector3( +girth, +girth, BodyHeight );
 
 		return new BBox( mins, maxs );
 	}
 
-
-	// Duck body height 32
-	// Eye Height 64
-	// Duck Eye Height 28
-
-	public Vector3 mins;
-	public Vector3 maxs;
-
-	/// <summary>
-	/// Any bbox traces we do will be offset by this amount.
-	/// todo: this needs to be predicted
-	/// </summary>
-	public Vector3 TraceOffset;
-
 	public virtual void SetBBox( Vector3 mins, Vector3 maxs )
 	{
 		if ( this.mins == mins && this.maxs == maxs )
+		{
 			return;
+		}
 
 		this.mins = mins;
 		this.maxs = maxs;
 	}
 
 	/// <summary>
-	/// Update the size of the bbox. We should really trigger some shit if this changes.
+	///     Update the size of the bbox. We should really trigger some shit if this changes.
 	/// </summary>
 	public virtual void UpdateBBox( int forceduck = 0 )
 	{
 		var girth = BodyGirth * 0.5f;
-		var height = (EyeHeight + DuckAmount) + (BodyHeight - EyeHeight);
-		if ( forceduck == 1 ) height = DuckHeight;
-		if ( forceduck == -1 ) height = BodyHeight;
+		var height = EyeHeight + DuckAmount + (BodyHeight - EyeHeight);
+		if ( forceduck == 1 )
+		{
+			height = DuckHeight;
+		}
+
+		if ( forceduck == -1 )
+		{
+			height = BodyHeight;
+		}
 
 		var mins = new Vector3( -girth, -girth, 0 ) * Entity.Scale;
 		var maxs = new Vector3( +girth, +girth, height ) * Entity.Scale;
@@ -100,27 +144,29 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		SetBBox( mins, maxs );
 	}
 
-	protected float SurfaceFriction;
-
 
 	public override void FrameSimulate( IClient cl )
 	{
-		if ( ShowBBox ) DebugOverlay.Box( Entity.Position, mins, maxs, Color.Yellow );
+		if ( ShowBBox )
+		{
+			DebugOverlay.Box( Entity.Position, mins, maxs, Color.Yellow );
+		}
+
 		RestoreGroundAngles();
-		var pl = Entity as Player;
+		var pl = Entity;
 		SaveGroundAngles();
 		DuckFrameSimulate();
 	}
 
 	public override void BuildInput()
 	{
-
-		var pl = Entity as Player;
+		var pl = Entity;
 		pl.InputDirection = Input.AnalogMove;
 	}
+
 	public override void Simulate( IClient cl )
 	{
-		var pl = Entity as Player;
+		var pl = Entity;
 
 		Events?.Clear();
 		Tags?.Clear();
@@ -162,7 +208,7 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		//
 		if ( !Swimming && !IsTouchingLadder )
 		{
-			Entity.Velocity -= new Vector3( 0, 0, (Gravity * Entity.Scale) * 0.5f ) * Time.Delta;
+			Entity.Velocity -= new Vector3( 0, 0, Gravity * Entity.Scale * 0.5f ) * Time.Delta;
 			Entity.Velocity += new Vector3( 0, 0, Entity.BaseVelocity.z ) * Time.Delta;
 
 			Entity.BaseVelocity = Entity.BaseVelocity.WithZ( 0 );
@@ -185,15 +231,14 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		{
 			WaterSimulate();
 		}
-		else
-		if ( AutoJump ? Input.Down( "Jump" ) : Input.Pressed( "Jump" ) )
+		else if ( AutoJump ? Input.Down( "Jump" ) : Input.Pressed( "Jump" ) )
 		{
 			CheckJumpButton();
 		}
 
 		// Fricion is handled before we add in any base velocity. That way, if we are on a conveyor,
 		//  we don't slow when standing still, relative to the conveyor.
-		bool bStartOnGround = Entity.GroundEntity != null;
+		var bStartOnGround = Entity.GroundEntity != null;
 		//bool bDropSound = false;
 		if ( bStartOnGround )
 		{
@@ -216,12 +261,10 @@ public partial class WalkControllerComponent : BaseControllerComponent
 
 		if ( Swimming || IsTouchingLadder )
 		{
-
 			WishVelocity *= pl.ViewAngles.ToRotation();
 		}
 		else
 		{
-
 			WishVelocity *= pl.ViewAngles.WithPitch( 0 ).ToRotation();
 		}
 
@@ -237,10 +280,10 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		WishVelocity *= SpeedMultiplier;
 
 
-		bool bStayOnGround = false;
+		var bStayOnGround = false;
 		if ( Swimming )
 		{
-			ApplyFriction( 1 );
+			ApplyFriction();
 			WaterMove();
 		}
 		else if ( IsTouchingLadder )
@@ -263,7 +306,7 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		// FinishGravity
 		if ( !Swimming && !IsTouchingLadder )
 		{
-			Entity.Velocity -= new Vector3( 0, 0, (Gravity * Entity.Scale) * 0.5f ) * Time.Delta;
+			Entity.Velocity -= new Vector3( 0, 0, Gravity * Entity.Scale * 0.5f ) * Time.Delta;
 		}
 
 
@@ -271,8 +314,12 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		{
 			Entity.Velocity = Entity.Velocity.WithZ( 0 );
 		}
+
 		DoPushingStuff();
-		if ( Entity == null ) return;
+		if ( Entity == null )
+		{
+			return;
+		}
 
 		// CheckFalling(); // fall damage etc
 
@@ -283,34 +330,51 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		LatchOntoLadder();
 		PreviousGroundEntity = Entity.GroundEntity;
 
-		bool Debug = false;
+		var Debug = false;
 		if ( Debug )
 		{
 			DebugOverlay.Box( Entity.Position + TraceOffset, mins, maxs, Color.Red );
 			DebugOverlay.Box( Entity.Position, mins, maxs, Color.Blue );
 
 			var lineOffset = 0;
-			if ( Game.IsServer ) lineOffset = 10;
+			if ( Game.IsServer )
+			{
+				lineOffset = 10;
+			}
 
 			DebugOverlay.ScreenText( $"        Position: {Entity.Position}", lineOffset + 0 );
 			DebugOverlay.ScreenText( $"        Velocity: {Entity.Velocity}", lineOffset + 1 );
 			DebugOverlay.ScreenText( $"    BaseVelocity: {Entity.BaseVelocity}", lineOffset + 2 );
-			DebugOverlay.ScreenText( $"    GroundEntity: {Entity.GroundEntity} [{Entity.GroundEntity?.Velocity}]", lineOffset + 3 );
+			DebugOverlay.ScreenText( $"    GroundEntity: {Entity.GroundEntity} [{Entity.GroundEntity?.Velocity}]",
+				lineOffset + 3 );
 			DebugOverlay.ScreenText( $" SurfaceFriction: {SurfaceFriction}", lineOffset + 4 );
 			DebugOverlay.ScreenText( $"    WishVelocity: {WishVelocity}", lineOffset + 5 );
 			DebugOverlay.ScreenText( $"    Speed: {Entity.Velocity.Length}", lineOffset + 6 );
 		}
-
 	}
 
 	public virtual float GetWishSpeed()
 	{
-		var ws = -1;// Duck.GetWishSpeed();
-		if ( ws >= 0 ) return ws;
+		var ws = -1; // Duck.GetWishSpeed();
+		if ( ws >= 0 )
+		{
+			return ws;
+		}
 
-		if ( Input.Down( "Duck" ) || IsDucking ) return CrouchSpeed;
-		if ( Input.Down( "Run" ) && CanSprint ) return SprintSpeed;
-		if ( Input.Down( "Walk" ) ) return WalkSpeed;
+		if ( Input.Down( "Duck" ) || IsDucking )
+		{
+			return CrouchSpeed;
+		}
+
+		if ( Input.Down( "Run" ) && CanSprint )
+		{
+			return SprintSpeed;
+		}
+
+		if ( Input.Down( "Walk" ) )
+		{
+			return WalkSpeed;
+		}
 
 		return DefaultSpeed;
 	}
@@ -336,22 +400,23 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		//  DebugOverlay.Text( 0, Pos + Vector3.Up * 100, $"forward: {Input.Forward}\nsideward: {Input.Right}" );
 
 		// Add in any base velocity to the current velocity.
-		if (Entity.Velocity.Length != 0)
+		if ( Entity.Velocity.Length != 0 )
 		{
 			var footstepTimeThreshold = 60f / Entity.Velocity.Length;
 
-			if (TimeSinceFootstep > footstepTimeThreshold)
+			if ( TimeSinceFootstep > footstepTimeThreshold )
 			{
 				var trace = Trace.Ray( Entity.Position, Entity.Position + Vector3.Down * 20f )
 					.Radius( 1f )
 					.Ignore( Entity )
 					.Run();
 
-				if (trace.Hit)
+				if ( trace.Hit )
 				{
 					FootstepFoot = !FootstepFoot;
 
-					trace.Surface.DoFootstep( Entity, trace, FootstepFoot ? 1 : 0, 35f * (Entity.Velocity.Length / SprintSpeed) );
+					trace.Surface.DoFootstep( Entity, trace, FootstepFoot ? 1 : 0,
+						35f * (Entity.Velocity.Length / SprintSpeed) );
 
 					TimeSinceFootstep = 0;
 				}
@@ -380,23 +445,21 @@ public partial class WalkControllerComponent : BaseControllerComponent
 			}
 
 			StepMove();
-
 		}
 		finally
 		{
-
 			// Now pull the base velocity back out.   Base velocity is set if you are on a moving object, like a conveyor (or maybe another monster?)
 			Entity.Velocity -= Entity.BaseVelocity;
 		}
 
 		StayOnGround();
 
-		Entity.Velocity = Entity.Velocity.Normal * MathF.Min( Entity.Velocity.Length, (GetWishSpeed() * Entity.Scale) );
+		Entity.Velocity = Entity.Velocity.Normal * MathF.Min( Entity.Velocity.Length, GetWishSpeed() * Entity.Scale );
 	}
 
 	public virtual void StepMove()
 	{
-		MoveHelper mover = new MoveHelper( Entity.Position, Entity.Velocity );
+		var mover = new MoveHelper( Entity.Position, Entity.Velocity );
 		mover.Trace = mover.Trace.Size( mins, maxs ).Ignore( Entity );
 		mover.MaxStandableAngle = GroundAngle;
 
@@ -408,7 +471,7 @@ public partial class WalkControllerComponent : BaseControllerComponent
 
 	public virtual void Move()
 	{
-		MoveHelper mover = new MoveHelper( Entity.Position, Entity.Velocity );
+		var mover = new MoveHelper( Entity.Position, Entity.Velocity );
 		mover.Trace = mover.Trace.Size( mins, maxs ).Ignore( Entity );
 		mover.MaxStandableAngle = GroundAngle;
 
@@ -419,7 +482,7 @@ public partial class WalkControllerComponent : BaseControllerComponent
 	}
 
 	/// <summary>
-	/// Add our wish direction and speed onto our velocity
+	///     Add our wish direction and speed onto our velocity
 	/// </summary>
 	public virtual void Accelerate( Vector3 wishdir, float wishspeed, float speedLimit, float acceleration )
 	{
@@ -430,7 +493,9 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		speedLimit *= Entity.Scale;
 		acceleration /= Entity.Scale;
 		if ( speedLimit > 0 && wishspeed > speedLimit )
+		{
 			wishspeed = speedLimit;
+		}
 
 		// See if we are changing direction a bit
 		var currentspeed = Entity.Velocity.Dot( wishdir );
@@ -440,20 +505,24 @@ public partial class WalkControllerComponent : BaseControllerComponent
 
 		// If not going to add any speed, done.
 		if ( addspeed <= 0 )
+		{
 			return;
+		}
 
 		// Determine amount of acceleration.
-		var accelspeed = (acceleration * Entity.Scale) * Time.Delta * wishspeed * SurfaceFriction;
+		var accelspeed = acceleration * Entity.Scale * Time.Delta * wishspeed * SurfaceFriction;
 
 		// Cap at addspeed
 		if ( accelspeed > addspeed )
+		{
 			accelspeed = addspeed;
+		}
 
 		Entity.Velocity += wishdir * accelspeed;
 	}
 
 	/// <summary>
-	/// Remove ground friction from velocity
+	///     Remove ground friction from velocity
 	/// </summary>
 	public virtual void ApplyFriction( float frictionAmount = 1.0f )
 	{
@@ -463,18 +532,24 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		// Not on ground - no friction   
 		// Calculate speed 
 		var speed = Entity.Velocity.Length;
-		if ( speed < 0.1f ) return;
+		if ( speed < 0.1f )
+		{
+			return;
+		}
 
 		// Bleed off some speed, but if we have less than the bleed
 		//  threshold, bleed the threshold amount.
-		float control = (speed < StopSpeed * Entity.Scale) ? (StopSpeed * Entity.Scale) : speed;
+		var control = speed < StopSpeed * Entity.Scale ? StopSpeed * Entity.Scale : speed;
 
 		// Add the amount to the drop amount.
 		var drop = control * Time.Delta * frictionAmount;
 
 		// scale the velocity
-		float newspeed = speed - drop;
-		if ( newspeed < 0 ) newspeed = 0;
+		var newspeed = speed - drop;
+		if ( newspeed < 0 )
+		{
+			newspeed = 0;
+		}
 
 		if ( newspeed != speed )
 		{
@@ -485,17 +560,21 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		// mv->m_outWishVel -= (1.f-newspeed) * mv->m_vecVelocity;
 	}
 
-	[Net, Predicted] public bool IsDucking { get; set; } // replicate
-	[Net, Predicted] public float DuckAmount { get; set; } = 0;
 	public virtual void CheckDuck()
 	{
-		var pl = Entity as Player;
-		bool wants = Input.Down( "Duck" );
+		var pl = Entity;
+		var wants = Input.Down( "Duck" );
 
 		if ( wants != IsDucking )
 		{
-			if ( wants ) TryDuck();
-			else TryUnDuck();
+			if ( wants )
+			{
+				TryDuck();
+			}
+			else
+			{
+				TryUnDuck();
+			}
 		}
 
 		if ( IsDucking )
@@ -513,6 +592,7 @@ public partial class WalkControllerComponent : BaseControllerComponent
 					pl.Position -= Vector3.Up * (delta * Entity.Scale);
 				}
 			}
+
 			FixPlayerCrouchStuck( true );
 			CategorizePosition( false );
 		}
@@ -532,16 +612,16 @@ public partial class WalkControllerComponent : BaseControllerComponent
 					pl.Position -= Vector3.Up * (delta * Entity.Scale);
 				}
 			}
+
 			CategorizePosition( false );
 		}
-		pl.EyeLocalPosition = pl.EyeLocalPosition.WithZ( EyeHeight + (DuckAmount) );
 
+		pl.EyeLocalPosition = pl.EyeLocalPosition.WithZ( EyeHeight + DuckAmount );
 	}
-	public float LocalDuckAmount { get; set; } = 0;
-	void DuckFrameSimulate()
-	{
 
-		var pl = Entity as Player;
+	private void DuckFrameSimulate()
+	{
+		var pl = Entity;
 		if ( IsDucking )
 		{
 			LocalDuckAmount = LocalDuckAmount.LerpTo( (EyeHeight - DuckEyeHeight) * -1, 8 * Time.Delta );
@@ -550,8 +630,10 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		{
 			LocalDuckAmount = LocalDuckAmount.LerpTo( 0, 8 * Time.Delta );
 		}
+
 		pl.EyeLocalPosition = pl.EyeLocalPosition.WithZ( EyeHeight + LocalDuckAmount );
 	}
+
 	public virtual void TryDuck()
 	{
 		IsDucking = true;
@@ -566,19 +648,22 @@ public partial class WalkControllerComponent : BaseControllerComponent
 			UpdateBBox();
 			return;
 		}
+
 		IsDucking = false;
 	}
 
 	public virtual void FixPlayerCrouchStuck( bool upward )
 	{
-		int direction = upward ? 1 : 0;
+		var direction = upward ? 1 : 0;
 
 		var trace = TraceBBox( Entity.Position, Entity.Position );
 		if ( trace.Entity == null )
+		{
 			return;
+		}
 
 		var test = Entity.Position;
-		for ( int i = 0; i < (DuckHeight - 4); i++ )
+		for ( var i = 0; i < DuckHeight - 4; i++ )
 		{
 			var org = Entity.Position;
 			org.z += direction;
@@ -586,11 +671,14 @@ public partial class WalkControllerComponent : BaseControllerComponent
 			Entity.Position = org;
 			trace = TraceBBox( Entity.Position, Entity.Position );
 			if ( trace.Entity == null )
+			{
 				return;
+			}
 		}
 
 		Entity.Position = test;
 	}
+
 	public virtual void CheckJumpButton()
 	{
 		//if ( !player->CanJump() )
@@ -606,7 +694,6 @@ public partial class WalkControllerComponent : BaseControllerComponent
 
 			return false;
 		}*/
-
 
 
 		// If we are in the water most of the way...
@@ -629,7 +716,9 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		}
 
 		if ( Entity.GroundEntity == null )
+		{
 			return;
+		}
 
 		/*
 		if ( player->m_Local.m_bDucking && (player->GetFlags() & FL_DUCKING) )
@@ -648,18 +737,18 @@ public partial class WalkControllerComponent : BaseControllerComponent
 
 		// MoveHelper()->PlayerSetAnimation( PLAYER_JUMP );
 
-		float flGroundFactor = 1.0f;
+		var flGroundFactor = 1.0f;
 		//if ( player->m_pSurfaceData )
 		{
 			//   flGroundFactor = g_pPhysicsQuery->GetGameSurfaceproperties( player->m_pSurfaceData )->m_flJumpFactor;
 		}
 
-		float flMul = (268.3281572999747f * Entity.Scale) * 1.2f;
-		float startz = Entity.Velocity.z;
+		var flMul = 268.3281572999747f * Entity.Scale * 1.2f;
+		var startz = Entity.Velocity.z;
 
 		Entity.Velocity = Entity.Velocity.WithZ( startz + flMul * flGroundFactor );
 
-		Entity.Velocity -= new Vector3( 0, 0, (Gravity * Entity.Scale) * 0.5f ) * Time.Delta;
+		Entity.Velocity -= new Vector3( 0, 0, Gravity * Entity.Scale * 0.5f ) * Time.Delta;
 
 		// mv->m_outJumpVel.z += mv->m_vecVelocity[2] - startz;
 		// mv->m_outStepHeight += 0.15f;
@@ -668,8 +757,8 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		//mv->m_nOldButtons |= IN_JUMP;
 
 		AddEvent( "jump" );
-
 	}
+
 	public virtual void WaterSimulate()
 	{
 		if ( Entity.GetWaterLevel() > 0.4 )
@@ -678,7 +767,7 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		}
 
 		// If we are falling again, then we must not trying to jump out of water any more.
-		if ( (Entity.Velocity.z < 0.0f) && IsJumpingFromWater )
+		if ( Entity.Velocity.z < 0.0f && IsJumpingFromWater )
 		{
 			WaterJumpTime = 0.0f;
 		}
@@ -688,25 +777,24 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		{
 			CheckJumpButton();
 		}
+
 		SetTag( "swimming" );
 	}
-	protected float WaterJumpTime { get; set; }
-	protected Vector3 WaterJumpVelocity { get; set; }
-	protected bool IsJumpingFromWater => WaterJumpTime > 0;
-	protected TimeSince TimeSinceSwimSound { get; set; }
-	protected float LastWaterLevel { get; set; }
 
-	public virtual float WaterJumpHeight => 8;
 	protected void CheckWaterJump()
 	{
 		// Already water jumping.
 		if ( IsJumpingFromWater )
+		{
 			return;
+		}
 
 		// Don't hop out if we just jumped in
 		// only hop out if we are moving up
 		if ( Entity.Velocity.z < -180 )
+		{
 			return;
+		}
 
 		// See if we are backing up
 		var flatvelocity = Entity.Velocity.WithZ( 0 );
@@ -720,14 +808,18 @@ public partial class WalkControllerComponent : BaseControllerComponent
 
 		// Are we backing into water from steps or something?  If so, don't pop forward
 		if ( curspeed != 0 && Vector3.Dot( flatvelocity, flatforward ) < 0 )
+		{
 			return;
+		}
 
 		var vecStart = Entity.Position + (mins + maxs) * .5f;
 		var vecEnd = vecStart + flatforward * 24;
 
 		var tr = TraceBBox( vecStart, vecEnd );
 		if ( tr.Fraction == 1 )
+		{
 			return;
+		}
 
 		vecStart.z = Entity.Position.z + EyeHeight + WaterJumpHeight;
 		vecEnd = vecStart + flatforward * 24;
@@ -735,7 +827,9 @@ public partial class WalkControllerComponent : BaseControllerComponent
 
 		tr = TraceBBox( vecStart, vecEnd );
 		if ( tr.Fraction < 1.0 )
+		{
 			return;
+		}
 
 		// Now trace down to see if we would actually land on a standable surface.
 		vecStart = vecEnd;
@@ -749,6 +843,7 @@ public partial class WalkControllerComponent : BaseControllerComponent
 			WaterJumpTime = 2000;
 		}
 	}
+
 	public virtual void AirMove()
 	{
 		var wishdir = WishVelocity.Normal;
@@ -779,20 +874,21 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		Entity.Velocity -= Entity.BaseVelocity;
 	}
 
-	bool IsTouchingLadder = false;
-	Vector3 LadderNormal;
-
-	Vector3 LastNonZeroWishLadderVelocity;
 	public virtual void CheckLadder()
 	{
-		var pl = Entity as Player;
+		var pl = Entity;
 
 		var wishvel = new Vector3( pl.InputDirection.x.Clamp( -1f, 1f ), pl.InputDirection.y.Clamp( -1f, 1f ), 0 );
 		if ( wishvel.Length > 0 )
 		{
 			LastNonZeroWishLadderVelocity = wishvel;
 		}
-		if ( TryLatchNextTickCounter > 0 ) wishvel = LastNonZeroWishLadderVelocity * -1;
+
+		if ( TryLatchNextTickCounter > 0 )
+		{
+			wishvel = LastNonZeroWishLadderVelocity * -1;
+		}
+
 		wishvel *= pl.ViewAngles.WithPitch( 0 ).ToRotation();
 		wishvel = wishvel.Normal;
 
@@ -810,13 +906,13 @@ public partial class WalkControllerComponent : BaseControllerComponent
 				Eject.y = LadderNormal.y * sidem;
 				Eject.z = (3 * upm).Clamp( 0, 1 );
 
-				Entity.Velocity += (Eject * 180.0f) * Entity.Scale;
+				Entity.Velocity += Eject * 180.0f * Entity.Scale;
 				IsTouchingLadder = false;
 
 				return;
-
 			}
-			else if ( Entity.GroundEntity != null && LadderNormal.Dot( wishvel ) > 0 )
+
+			if ( Entity.GroundEntity != null && LadderNormal.Dot( wishvel ) > 0 )
 			{
 				IsTouchingLadder = false;
 
@@ -826,13 +922,13 @@ public partial class WalkControllerComponent : BaseControllerComponent
 
 		const float ladderDistance = 1.0f;
 		var start = Entity.Position;
-		Vector3 end = start + (IsTouchingLadder ? (LadderNormal * -1.0f) : wishvel) * ladderDistance;
+		var end = start + (IsTouchingLadder ? LadderNormal * -1.0f : wishvel) * ladderDistance;
 
 		var pm = Trace.Ray( start, end )
-					.Size( mins, maxs )
-					.WithTag( "ladder" )
-					.Ignore( Entity )
-					.Run();
+			.Size( mins, maxs )
+			.WithTag( "ladder" )
+			.Ignore( Entity )
+			.Run();
 
 		IsTouchingLadder = false;
 
@@ -842,58 +938,70 @@ public partial class WalkControllerComponent : BaseControllerComponent
 			LadderNormal = pm.Normal;
 		}
 	}
+
 	public virtual void LadderMove()
 	{
 		var velocity = WishVelocity;
-		float normalDot = velocity.Dot( LadderNormal );
+		var normalDot = velocity.Dot( LadderNormal );
 
 		var cross = LadderNormal * normalDot;
-		Entity.Velocity = (velocity - cross) + (-normalDot * LadderNormal.Cross( Vector3.Up.Cross( LadderNormal ).Normal ));
+		Entity.Velocity = velocity - cross + -normalDot * LadderNormal.Cross( Vector3.Up.Cross( LadderNormal ).Normal );
 
 		Move();
 	}
 
-	Entity PreviousGroundEntity;
-	int TryLatchNextTickCounter = 0;
-	Vector3 LastNonZeroWishVelocity;
-	[ConVar.Replicated( "sv_ladderlatchdebug" )]
-	public static bool LatchDebug { get; set; } = false;
 	public virtual void LatchOntoLadder()
 	{
 		if ( !WishVelocity.Normal.IsNearlyZero( 0.001f ) )
 		{
 			LastNonZeroWishVelocity = WishVelocity;
 		}
+
 		if ( TryLatchNextTickCounter > 0 )
 		{
-
 			Entity.Velocity = (LastNonZeroWishVelocity.Normal * -100).WithZ( Entity.Velocity.z );
 			TryLatchNextTickCounter++;
 		}
+
 		if ( TryLatchNextTickCounter >= 10 )
 		{
 			TryLatchNextTickCounter = 0;
 		}
 
-		if ( Entity.GroundEntity != null ) return;
-		if ( PreviousGroundEntity == null ) return;
-		var pos = Entity.Position + (Vector3.Down * 16);
+		if ( Entity.GroundEntity != null )
+		{
+			return;
+		}
+
+		if ( PreviousGroundEntity == null )
+		{
+			return;
+		}
+
+		var pos = Entity.Position + Vector3.Down * 16;
 		//var tr = TraceBBox( pos, pos );
 
-		var tr = Trace.Ray( pos, pos - (LastNonZeroWishVelocity.Normal * 8) )
-					.Size( mins, maxs )
-					.WithTag( "ladder" )
-					.Ignore( Entity )
-					.Run();
+		var tr = Trace.Ray( pos, pos - LastNonZeroWishVelocity.Normal * 8 )
+			.Size( mins, maxs )
+			.WithTag( "ladder" )
+			.Ignore( Entity )
+			.Run();
 
-		if ( LatchDebug ) DebugOverlay.Line( Entity.Position, pos, 10 );
-		if ( LatchDebug ) DebugOverlay.Line( tr.StartPosition, tr.EndPosition, 10 );
+		if ( LatchDebug )
+		{
+			DebugOverlay.Line( Entity.Position, pos, 10 );
+		}
+
+		if ( LatchDebug )
+		{
+			DebugOverlay.Line( tr.StartPosition, tr.EndPosition, 10 );
+		}
+
 		if ( tr.Hit )
 		{
 			Entity.Velocity = Vector3.Zero.WithZ( Entity.Velocity.z );
 			TryLatchNextTickCounter++;
 		}
-
 	}
 
 
@@ -914,10 +1022,10 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		//
 		//  Shooting up really fast.  Definitely not on ground trimed until ladder shit
 		//
-		bool bMovingUpRapidly = Entity.Velocity.z > MaxNonJumpVelocity;
-		bool bMovingUp = Entity.Velocity.z > 0;
+		var bMovingUpRapidly = Entity.Velocity.z > MaxNonJumpVelocity;
+		var bMovingUp = Entity.Velocity.z > 0;
 
-		bool bMoveToEndPos = false;
+		var bMoveToEndPos = false;
 
 		if ( Entity.GroundEntity != null ) // and not underwater
 		{
@@ -944,7 +1052,9 @@ public partial class WalkControllerComponent : BaseControllerComponent
 			bMoveToEndPos = false;
 
 			if ( Entity.Velocity.z > 0 )
+			{
 				SurfaceFriction = 0.25f;
+			}
 		}
 		else
 		{
@@ -955,12 +1065,10 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		{
 			Entity.Position = pm.EndPosition;
 		}
-
 	}
 
-	public Vector3 GroundNormal { get; set; }
 	/// <summary>
-	/// We have a new ground entity
+	///     We have a new ground entity
 	/// </summary>
 	public virtual void UpdateGroundEntity( TraceResult tr )
 	{
@@ -970,14 +1078,20 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		// A value of 0.8f feels pretty normal for vphysics, whereas 1.0f is normal for players.
 		// This scaling trivially makes them equivalent.  REVISIT if this affects low friction surfaces too much.
 		SurfaceFriction = tr.Surface.Friction * 1.25f;
-		if ( SurfaceFriction > 1 ) SurfaceFriction = 1;
+		if ( SurfaceFriction > 1 )
+		{
+			SurfaceFriction = 1;
+		}
 
 		//if ( tr.Entity == GroundEntity ) return;
 
 		Vector3 oldGroundVelocity = default;
-		if ( Entity.GroundEntity != null ) oldGroundVelocity = Entity.GroundEntity.Velocity;
+		if ( Entity.GroundEntity != null )
+		{
+			oldGroundVelocity = Entity.GroundEntity.Velocity;
+		}
 
-		bool wasOffGround = Entity.GroundEntity == null;
+		var wasOffGround = Entity.GroundEntity == null;
 
 		Entity.GroundEntity = tr.Entity;
 
@@ -988,11 +1102,14 @@ public partial class WalkControllerComponent : BaseControllerComponent
 	}
 
 	/// <summary>
-	/// We're no longer on the ground, remove it
+	///     We're no longer on the ground, remove it
 	/// </summary>
 	public virtual void ClearGroundEntity()
 	{
-		if ( Entity.GroundEntity == null ) return;
+		if ( Entity.GroundEntity == null )
+		{
+			return;
+		}
 
 		Entity.GroundEntity = null;
 		GroundNormal = Vector3.Up;
@@ -1000,9 +1117,9 @@ public partial class WalkControllerComponent : BaseControllerComponent
 	}
 
 	/// <summary>
-	/// Traces the current bbox and returns the result.
-	/// liftFeet will move the start position up by this amount, while keeping the top of the bbox at the same
-	/// position. This is good when tracing down because you won't be tracing through the ceiling above.
+	///     Traces the current bbox and returns the result.
+	///     liftFeet will move the start position up by this amount, while keeping the top of the bbox at the same
+	///     position. This is good when tracing down because you won't be tracing through the ceiling above.
 	/// </summary>
 	public virtual TraceResult TraceBBox( Vector3 start, Vector3 end, float liftFeet = 0.0f )
 	{
@@ -1010,11 +1127,12 @@ public partial class WalkControllerComponent : BaseControllerComponent
 	}
 
 	/// <summary>
-	/// Traces the bbox and returns the trace result.
-	/// LiftFeet will move the start position up by this amount, while keeping the top of the bbox at the same 
-	/// position. This is good when tracing down because you won't be tracing through the ceiling above.
+	///     Traces the bbox and returns the trace result.
+	///     LiftFeet will move the start position up by this amount, while keeping the top of the bbox at the same
+	///     position. This is good when tracing down because you won't be tracing through the ceiling above.
 	/// </summary>
-	public virtual TraceResult TraceBBox( Vector3 start, Vector3 end, Vector3 mins, Vector3 maxs, float liftFeet = 0.0f )
+	public virtual TraceResult TraceBBox( Vector3 start, Vector3 end, Vector3 mins, Vector3 maxs,
+		float liftFeet = 0.0f )
 	{
 		if ( liftFeet > 0 )
 		{
@@ -1024,17 +1142,17 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		}
 
 		var tr = Trace.Ray( start + TraceOffset, end + TraceOffset )
-					.Size( mins, maxs )
-					.WithAnyTags( "solid", "playerclip", "passbullets", "player" )
-					.Ignore( Entity )
-					.Run();
+			.Size( mins, maxs )
+			.WithAnyTags( "solid", "playerclip", "passbullets", "player" )
+			.Ignore( Entity )
+			.Run();
 
 		tr.EndPosition -= TraceOffset;
 		return tr;
 	}
 
 	/// <summary>
-	/// Try to keep a walking player on the ground when running down slopes etc
+	///     Try to keep a walking player on the ground when running down slopes etc
 	/// </summary>
 	public virtual void StayOnGround()
 	{
@@ -1048,10 +1166,25 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		// Now trace down from a known safe position
 		trace = TraceBBox( start, end );
 
-		if ( trace.Fraction <= 0 ) return;
-		if ( trace.Fraction >= 1 ) return;
-		if ( trace.StartedSolid ) return;
-		if ( Vector3.GetAngle( Vector3.Up, trace.Normal ) > GroundAngle ) return;
+		if ( trace.Fraction <= 0 )
+		{
+			return;
+		}
+
+		if ( trace.Fraction >= 1 )
+		{
+			return;
+		}
+
+		if ( trace.StartedSolid )
+		{
+			return;
+		}
+
+		if ( Vector3.GetAngle( Vector3.Up, trace.Normal ) > GroundAngle )
+		{
+			return;
+		}
 
 		// This is incredibly hacky. The real problem is that trace returning that strange value we can't network over.
 		// float flDelta = fabs( mv->GetAbsOrigin().z - trace.m_vEndPos.z );
@@ -1060,24 +1193,25 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		Entity.Position = trace.EndPosition;
 	}
 
-	public Transform? GroundTransform;
-	public Sandbox.Entity? OldGroundEntity;
-	void RestoreGroundPos()
+	private void RestoreGroundPos()
 	{
-		if ( Entity.GroundEntity == null || Entity.GroundEntity.IsWorld || GroundTransform == null || Entity.GroundEntity != OldGroundEntity )
+		if ( Entity.GroundEntity == null || Entity.GroundEntity.IsWorld || GroundTransform == null ||
+		     Entity.GroundEntity != OldGroundEntity )
+		{
 			return;
+		}
 
 		var worldTrns = Entity.GroundEntity.Transform.ToWorld( GroundTransform.Value );
 		if ( Prediction.FirstTime )
 		{
-			Entity.BaseVelocity = ((Entity.Position - worldTrns.Position) * -1) / Time.Delta;
+			Entity.BaseVelocity = (Entity.Position - worldTrns.Position) * -1 / Time.Delta;
 		}
 		//Entity.Position = (Entity.Position.WithZ( worldTrns.Position.z ));
 	}
 
-	void SaveGroundPos()
+	private void SaveGroundPos()
 	{
-		var ply = Entity as Player;
+		var ply = Entity;
 		if ( Entity.GroundEntity == null || Entity.GroundEntity.IsWorld )
 		{
 			OldGroundEntity = null;
@@ -1094,60 +1228,66 @@ public partial class WalkControllerComponent : BaseControllerComponent
 			GroundTransform = null;
 			GroundTransformViewAngles = null;
 		}
+
 		OldGroundEntity = Entity.GroundEntity;
 	}
 
-	public Transform? GroundTransformViewAngles;
-	public Angles? PreviousViewAngles;
-	void RestoreGroundAngles()
+	private void RestoreGroundAngles()
 	{
-		if ( Entity.GroundEntity == null || Entity.GroundEntity.IsWorld || GroundTransformViewAngles == null || PreviousViewAngles == null )
+		if ( Entity.GroundEntity == null || Entity.GroundEntity.IsWorld || GroundTransformViewAngles == null ||
+		     PreviousViewAngles == null )
+		{
 			return;
+		}
 
-		var ply = Entity as Player;
+		var ply = Entity;
 		var worldTrnsView = Entity.GroundEntity.Transform.ToWorld( GroundTransformViewAngles.Value );
-		ply.ViewAngles -= (PreviousViewAngles.Value.ToRotation() * worldTrnsView.Rotation.Inverse).Angles().WithPitch( 0 ).WithRoll( 0 );
+		ply.ViewAngles -= (PreviousViewAngles.Value.ToRotation() * worldTrnsView.Rotation.Inverse).Angles()
+			.WithPitch( 0 ).WithRoll( 0 );
 	}
-	void SaveGroundAngles()
-	{
 
+	private void SaveGroundAngles()
+	{
 		if ( Entity.GroundEntity == null || Entity.GroundEntity.IsWorld )
 		{
 			GroundTransformViewAngles = null;
 			return;
 		}
 
-		var ply = Entity as Player;
-		GroundTransformViewAngles = Entity.GroundEntity.Transform.ToLocal( new Transform( Vector3.Zero, ply.ViewAngles.ToRotation() ) );
+		var ply = Entity;
+		GroundTransformViewAngles =
+			Entity.GroundEntity.Transform.ToLocal( new Transform( Vector3.Zero, ply.ViewAngles.ToRotation() ) );
 		PreviousViewAngles = ply.ViewAngles;
 	}
-	bool PushDebug = false;
-	[SkipHotload] Dictionary<int, Transform> OldTransforms;
-	Transform OldTransform;
-	void DoPushingStuff()
+
+	private void DoPushingStuff()
 	{
 		var tr = TraceBBox( Entity.Position, Entity.Position );
 		if ( tr.StartedSolid
-			&& tr.Entity != null
-			&& tr.Entity != OldGroundEntity
-			&& tr.Entity != Entity.GroundEntity
-			&& !tr.Entity.IsWorld
-			&& OldTransforms != null
-			&& OldTransforms.TryGetValue( tr.Entity.NetworkIdent, out var oldTransform ) )
+		     && tr.Entity != null
+		     && tr.Entity != OldGroundEntity
+		     && tr.Entity != Entity.GroundEntity
+		     && !tr.Entity.IsWorld
+		     && OldTransforms != null
+		     && OldTransforms.TryGetValue( tr.Entity.NetworkIdent, out var oldTransform ) )
 		{
-			if ( tr.Entity is BasePhysics ) return;
+			if ( tr.Entity is BasePhysics )
+			{
+				return;
+			}
+
 			var oldPosition = Entity.Position;
 			var oldTransformLocal = oldTransform.ToLocal( Entity.Transform );
 			var newTransform = tr.Entity.Transform.ToWorld( oldTransformLocal );
 
 			// this used to be just the direction of the tr delta however pushing outwards a llittle seems more appropriate
-			var direction = ((Entity.Position - newTransform.Position) * -1);
+			var direction = (Entity.Position - newTransform.Position) * -1;
 			direction += (Entity.Position - tr.Entity.Position).Normal.WithZ( 0 ) * 0.8f;
 
 			FindIdealMovementDirection( newTransform.Position, direction, out var outOffset, out var outDirection );
 
 
-			var newPosition = newTransform.Position + (outDirection * outOffset) + (outDirection * 0.1f);
+			var newPosition = newTransform.Position + outDirection * outOffset + outDirection * 0.1f;
 
 			// Check if we're being crushed, if not we set our position.
 			if ( IsBeingCrushed( newPosition ) )
@@ -1156,11 +1296,10 @@ public partial class WalkControllerComponent : BaseControllerComponent
 			}
 			else
 			{
-				Entity.Velocity += (outDirection / Time.Delta);
+				Entity.Velocity += outDirection / Time.Delta;
 
 				// insurance we dont instantly get stuck again add a little extra.
 				Entity.Position = newPosition;
-
 			}
 		}
 
@@ -1169,7 +1308,8 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		GetPossibleTransforms();
 	}
 
-	void FindIdealMovementDirection( Vector3 Position, Vector3 Direction, out float OutOffset, out Vector3 OutDirection )
+	private void FindIdealMovementDirection( Vector3 Position, Vector3 Direction, out float OutOffset,
+		out Vector3 OutDirection )
 	{
 		OutDirection = Direction;
 		OutOffset = 0;
@@ -1177,55 +1317,72 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		//			look into doing this nicer at somepoint
 		// ------------------------------------------------------
 		// brute force our way into finding how much extra we need to be pushed in the case of AABB edges being still inside of the object
-		for ( int i = 0; i < 512; i++ )
+		for ( var i = 0; i < 512; i++ )
 		{
-			var possibleoffset = (float)(i) / 16f;
-			var pos = Position + (Direction * possibleoffset);
+			var possibleoffset = i / 16f;
+			var pos = Position + Direction * possibleoffset;
 
 			var offsettr = TraceBBox( pos, pos );
 
 			if ( !offsettr.StartedSolid )
 			{
-				if ( PushDebug ) DebugOverlay.Line( Entity.Position, pos, Color.Green, 5 );
+				if ( PushDebug )
+				{
+					DebugOverlay.Line( Entity.Position, pos, Color.Green, 5 );
+				}
+
 				OutDirection = Direction;
 				OutOffset = possibleoffset;
 				break;
 			}
 
 			//sidewards test, for things moving sideways and upwards or downwards
-			var posside = Position + (Direction.WithZ( 0 ) * possibleoffset);
+			var posside = Position + Direction.WithZ( 0 ) * possibleoffset;
 			var offsettrside = TraceBBox( posside, posside );
 
 			if ( !offsettrside.StartedSolid )
 			{
-				if ( PushDebug ) DebugOverlay.Line( Entity.Position, pos, Color.Green, 5 );
+				if ( PushDebug )
+				{
+					DebugOverlay.Line( Entity.Position, pos, Color.Green, 5 );
+				}
+
 				OutDirection = Direction.WithZ( 0 );
 				OutOffset = possibleoffset;
 
 				break;
 			}
 
-			if ( PushDebug ) DebugOverlay.Line( Entity.Position, pos, Color.Red, 5 );
+			if ( PushDebug )
+			{
+				DebugOverlay.Line( Entity.Position, pos, Color.Red, 5 );
+			}
 		}
 		// ------------------------------------------------------
 	}
 
-	bool IsBeingCrushed( Vector3 NewPosition )
+	private bool IsBeingCrushed( Vector3 NewPosition )
 	{
 		//do a trace that will decide whether or not we're being crushed
 		var crushtrace = Trace.Ray( Entity.Position, NewPosition )
-				.Ignore( Entity )
-				.Run();
+			.Ignore( Entity )
+			.Run();
 
-		if ( PushDebug ) DebugOverlay.Line( crushtrace.StartPosition, crushtrace.EndPosition, Color.Blue, 5 );
+		if ( PushDebug )
+		{
+			DebugOverlay.Line( crushtrace.StartPosition, crushtrace.EndPosition, Color.Blue, 5 );
+		}
 
 		return crushtrace.Fraction != 1;
 	}
 
-	void OnCrushed( Entity CurshingEntity )
+	private void OnCrushed( Entity CurshingEntity )
 	{
 		// deal crush damage!
-		if ( !Game.IsServer ) return;
+		if ( !Game.IsServer )
+		{
+			return;
+		}
 		//if ( CurshingEntity is DoorEntity || CurshingEntity is PlatformEntity || CurshingEntity is PathPlatformEntity )
 		//{
 		//	Entity.TakeDamage( DamageInfo.Generic( 5 ).WithTag( "crush" ) );
@@ -1352,17 +1509,16 @@ public partial class WalkControllerComponent : BaseControllerComponent
 		GetPossibleTransforms();
 	}*/
 
-	void GetPossibleTransforms()
+	private void GetPossibleTransforms()
 	{
-
 		var a = Sandbox.Entity.FindInSphere( Entity.Position, 512 + Entity.Velocity.Length );
 		var b = new Dictionary<int, Transform>();
 		foreach ( var i in a )
 		{
 			b.Add( i.NetworkIdent, i.Transform );
 		}
+
 		OldTransforms = b;
 		OldTransform = Entity.Transform;
 	}
 }
-

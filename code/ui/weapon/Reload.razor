@@ -1,9 +1,7 @@
-@using Sandbox;
-@using Sandbox.UI;
-@using System;
-
 @namespace MurderGame
-@inherits Panel
+@using System
+@using Sandbox
+@inherits Sandbox.UI.Panel
 
 <style>
 @@keyframes blink {
@@ -46,37 +44,38 @@ reload {
 }
 </style>
 
-@if (ReloadNeeded) {
-<!--<div class="box @(@Blink ? "blink" : "")">-->
-<div class="box blink">
-	<div>Reload</div>
-</div>
+@if (ReloadNeeded)
+{
+    <!--<div class="box @(Blink ? "blink" : "")">-->
+    <div class="box blink">
+        <div>Reload</div>
+    </div>
 }
 
 @code
 {
-	public bool ReloadNeeded { get; set; }
-	public bool Blink { get; set; }
+    public bool ReloadNeeded { get; set; }
+    public bool Blink { get; set; }
 
-	protected override int BuildHash()
-	{
-		var clientPawn = Game.LocalPawn;
+    protected override int BuildHash()
+    {
+        var clientPawn = Game.LocalPawn;
         if (clientPawn is Player {Camera: not null } player)
-		{
-			var inventory = player.Camera.GetObservedInventory();
-			if (inventory?.GetCurrentWeapon() != null)
-			{
-				var weapon = inventory.GetCurrentWeapon();
-				var ammo = weapon.Ammo;
-				ReloadNeeded = ammo == 0 && !weapon.Reloading;
-				Blink = !weapon.Reloading;
-				return HashCode.Combine(ReloadNeeded.GetHashCode(), Blink.GetHashCode());
-			}
-		}
-		if (ReloadNeeded)
-		{
-			ReloadNeeded = false;
-		}
-		return ReloadNeeded.GetHashCode();
-	}
+        {
+            var inventory = player.Camera.GetObservedInventory();
+            if (inventory?.GetCurrentWeapon() != null)
+            {
+                var weapon = inventory.GetCurrentWeapon();
+                var ammo = weapon.Ammo;
+                ReloadNeeded = ammo == 0 && !weapon.Reloading;
+                Blink = !weapon.Reloading;
+                return HashCode.Combine(ReloadNeeded.GetHashCode(), Blink.GetHashCode());
+            }
+        }
+        if (ReloadNeeded)
+        {
+            ReloadNeeded = false;
+        }
+        return ReloadNeeded.GetHashCode();
+    }
 }

@@ -1,38 +1,40 @@
-﻿using Sandbox;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Sandbox;
 
 namespace MurderGame;
 
 /// <summary>
-/// Component designed for movement, only 1 per pawn.
+///     Component designed for movement, only 1 per pawn.
 /// </summary>
 public class BaseControllerComponent : EntityComponent<Player>, ISingletonComponent
 {
+	internal HashSet<string> Events = new(StringComparer.OrdinalIgnoreCase);
+
+	internal HashSet<string> Tags;
+	public Vector3 WishVelocity { get; set; }
 
 	public virtual void Simulate( IClient cl )
 	{
-
 	}
+
 	public virtual void FrameSimulate( IClient cl )
 	{
-
 	}
+
 	public virtual void BuildInput()
 	{
-
 	}
-	public Vector3 WishVelocity { get; set; }
 
-	internal HashSet<string> Events = new( StringComparer.OrdinalIgnoreCase );
-
-	internal HashSet<string> Tags;
 	/// <summary>
-	/// Call OnEvent for each event
+	///     Call OnEvent for each event
 	/// </summary>
 	public virtual void RunEvents( BaseControllerComponent additionalController )
 	{
-		if ( Events == null ) return;
+		if ( Events == null )
+		{
+			return;
+		}
 
 		foreach ( var e in Events )
 		{
@@ -42,19 +44,22 @@ public class BaseControllerComponent : EntityComponent<Player>, ISingletonCompon
 	}
 
 	/// <summary>
-	/// An event has been triggered - maybe handle it
+	///     An event has been triggered - maybe handle it
 	/// </summary>
 	public virtual void OnEvent( string name )
 	{
-
 	}
 
 	/// <summary>
-	/// Returns true if we have this event
+	///     Returns true if we have this event
 	/// </summary>
 	public bool HasEvent( string eventName )
 	{
-		if ( Events == null ) return false;
+		if ( Events == null )
+		{
+			return false;
+		}
+
 		return Events.Contains( eventName );
 	}
 
@@ -62,26 +67,35 @@ public class BaseControllerComponent : EntityComponent<Player>, ISingletonCompon
 	/// </summary>
 	public bool HasTag( string tagName )
 	{
-		if ( Tags == null ) return false;
+		if ( Tags == null )
+		{
+			return false;
+		}
+
 		return Tags.Contains( tagName );
 	}
 
 
 	/// <summary>
-	/// Allows the controller to pass events to other systems
-	/// while staying abstracted.
-	/// For example, it could pass a "jump" event, which could then
-	/// be picked up by the playeranimator to trigger a jump animation,
-	/// and picked up by the player to play a jump sound.
+	///     Allows the controller to pass events to other systems
+	///     while staying abstracted.
+	///     For example, it could pass a "jump" event, which could then
+	///     be picked up by the playeranimator to trigger a jump animation,
+	///     and picked up by the player to play a jump sound.
 	/// </summary>
 	public void AddEvent( string eventName )
 	{
 		// TODO - shall we allow passing data with the event?
 
-		if ( Events == null ) Events = new HashSet<string>();
+		if ( Events == null )
+		{
+			Events = new HashSet<string>();
+		}
 
 		if ( Events.Contains( eventName ) )
+		{
 			return;
+		}
 
 		Events.Add( eventName );
 	}
@@ -96,9 +110,10 @@ public class BaseControllerComponent : EntityComponent<Player>, ISingletonCompon
 		Tags ??= new HashSet<string>();
 
 		if ( Tags.Contains( tagName ) )
+		{
 			return;
+		}
 
 		Tags.Add( tagName );
 	}
 }
-

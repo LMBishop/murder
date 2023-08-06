@@ -4,13 +4,13 @@ namespace MurderGame;
 
 public partial class Pistol : Weapon
 {
-	public override string ModelPath => "weapons/rust_pistol/rust_pistol.vmdl";
-	public override string ViewModelPath => "weapons/rust_pistol/v_rust_pistol.vmdl";
-
 	public Pistol()
 	{
 		MaxAmmo = 1;
 	}
+
+	public override string ModelPath => "weapons/rust_pistol/rust_pistol.vmdl";
+	public override string ViewModelPath => "weapons/rust_pistol/v_rust_pistol.vmdl";
 
 	[ClientRpc]
 	protected virtual void ShootEffects()
@@ -25,7 +25,7 @@ public partial class Pistol : Weapon
 
 	public override void PrimaryAttack()
 	{
-		if (Ammo > 0)
+		if ( Ammo > 0 )
 		{
 			--Ammo;
 			ShootEffects();

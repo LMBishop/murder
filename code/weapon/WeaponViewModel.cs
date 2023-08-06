@@ -2,10 +2,8 @@ using Sandbox;
 
 namespace MurderGame;
 
-public partial class WeaponViewModel : BaseViewModel
+public class WeaponViewModel : BaseViewModel
 {
-	protected Weapon Weapon { get; init; }
-
 	public WeaponViewModel( Weapon weapon )
 	{
 		Weapon = weapon;
@@ -13,10 +11,12 @@ public partial class WeaponViewModel : BaseViewModel
 		EnableViewmodelRendering = true;
 	}
 
+	protected Weapon Weapon { get; init; }
+
 	public override void PlaceViewmodel()
 	{
 		base.PlaceViewmodel();
 
-		Camera.Main.SetViewModelCamera( 80f, 1, 500 );
+		Camera.Main.SetViewModelCamera( 80f );
 	}
 }

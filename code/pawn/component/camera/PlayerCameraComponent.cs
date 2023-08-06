@@ -10,13 +10,13 @@ public class PlayerCameraComponent : BaseCameraComponent
 		// Set field of view to whatever the user chose in options
 		Camera.FieldOfView = Screen.CreateVerticalFieldOfView( Game.Preferences.FieldOfView );
 	}
+
 	public override void FrameSimulate( IClient cl )
 	{
-
-		var pl = Entity as Player;
+		var pl = Entity;
 		// Update rotation every frame, to keep things smooth  
 
-		if (pl.PlayerRagdoll != null && pl.LifeState == LifeState.Dead)
+		if ( pl.PlayerRagdoll != null && pl.LifeState == LifeState.Dead )
 		{
 			Camera.Position = pl.PlayerRagdoll.Position;
 			Camera.FirstPersonViewer = pl.PlayerRagdoll;
@@ -35,12 +35,15 @@ public class PlayerCameraComponent : BaseCameraComponent
 
 		Camera.ZNear = 8 * pl.Scale;
 	}
+
 	public override void BuildInput()
 	{
 		if ( Game.LocalClient.Components.TryGet<DevCamera>( out var _ ) )
+		{
 			return;
+		}
 
-		var pl = Entity as Player;
+		var pl = Entity;
 		var viewAngles = (pl.ViewAngles + Input.AnalogLook).Normal;
 		pl.ViewAngles = viewAngles.WithPitch( viewAngles.pitch.Clamp( -89f, 89f ) );
 	}

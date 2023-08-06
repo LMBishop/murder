@@ -1,14 +1,12 @@
-﻿using MurderGame;
+﻿using System;
+using MurderGame;
 using Sandbox;
-using System;
 using Sandbox.Component;
+using Player = MurderGame.Player;
 
-public partial class DroppedWeapon : AnimatedEntity, IUse
+public class DroppedWeapon : AnimatedEntity, IUse
 {
-	private int Ammo { get; }
-	private Type WeaponType { get; }
-
-	public DroppedWeapon(Weapon weapon) : this()
+	public DroppedWeapon( Weapon weapon ) : this()
 	{
 		Ammo = weapon.Ammo;
 		WeaponType = weapon.GetType();
@@ -16,49 +14,63 @@ public partial class DroppedWeapon : AnimatedEntity, IUse
 
 	public DroppedWeapon()
 	{
-		Tags.Add("droppedweapon");
-		
+		Tags.Add( "droppedweapon" );
+
 		var glow = Components.GetOrCreate<Glow>();
 		glow.Enabled = true;
 		glow.Width = 0.25f;
-		glow.Color = new Color( 4f, 50.0f, 70.0f, 1.0f );
-		glow.ObscuredColor = new Color( 0, 0, 0, 0);
-		
+		glow.Color = new Color( 4f, 50.0f, 70.0f );
+		glow.ObscuredColor = new Color( 0, 0, 0, 0 );
+
 		PhysicsEnabled = true;
 		UsePhysicsCollision = true;
 		EnableSelfCollisions = true;
 		EnableSolidCollisions = true;
 	}
 
-	public override void StartTouch( Entity other )
-	{
-		if ( !Game.IsServer ) return;
-		if ( !other.Tags.Has( "livingplayer" ) ) return;
-
-		var player = (MurderGame.Player)other;
-		if ( IsUsable( player ) )
-		{
-			Pickup( player );
-		}
-	}
-
-	public void Pickup( MurderGame.Player player )
-	{
-		var instance = TypeLibrary.Create<Weapon>( WeaponType );
-		instance.Ammo = Ammo;
-		player.Inventory.SetPrimaryWeapon( instance );
-		Delete();
-	}
+	private int Ammo { get; }
+	private Type WeaponType { get; }
 
 	public bool OnUse( Entity user )
 	{
-		if ( user is not MurderGame.Player player ) return false;
+		if ( user is not Player player )
+		{
+			return false;
+		}
+
 		Pickup( player );
 		return false;
 	}
 
 	public bool IsUsable( Entity user )
 	{
-		return user is MurderGame.Player { Inventory: { PrimaryWeapon: null, AllowPickup: true } };
+		return user is Player { Inventory: { PrimaryWeapon: null, AllowPickup: true } };
+	}
+
+	public override void StartTouch( Entity other )
+	{
+		if ( !Game.IsServer )
+		{
+			return;
+		}
+
+		if ( !other.Tags.Has( "livingplayer" ) )
+		{
+			return;
+		}
+
+		var player = (Player)other;
+		if ( IsUsable( player ) )
+		{
+			Pickup( player );
+		}
+	}
+
+	public void Pickup( Player player )
+	{
+		var instance = TypeLibrary.Create<Weapon>( WeaponType );
+		instance.Ammo = Ammo;
+		player.Inventory.SetPrimaryWeapon( instance );
+		Delete();
 	}
 }

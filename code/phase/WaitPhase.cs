@@ -1,9 +1,6 @@
-﻿using Sandbox;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Sandbox;
 
 namespace MurderGame;
 
@@ -17,28 +14,30 @@ public class WaitPhase : BasePhase
 
 	public override void Tick()
 	{
-		if (Game.Clients.Count >= MurderGame.MinPlayers)
+		if ( Game.Clients.Count >= MurderGame.MinPlayers )
 		{
-			if (!CountIn || (_isCountDown && ++TicksElapsed % Game.TickRate == 0 && --base.TimeLeft == 0))
+			if ( !CountIn || (_isCountDown && ++TicksElapsed % Game.TickRate == 0 && --TimeLeft == 0) )
 			{
-				base.NextPhase = new AssignPhase();
-				base.IsFinished = true;
+				NextPhase = new AssignPhase();
+				IsFinished = true;
 				return;
 			}
-			else if (CountIn && !_isCountDown)
+
+			if ( CountIn && !_isCountDown )
 			{
 				_isCountDown = true;
-				base.TimeLeft = 10;
+				TimeLeft = 10;
 			}
-		} else if (CountIn && _isCountDown)
+		}
+		else if ( CountIn && _isCountDown )
 		{
 			_isCountDown = false;
-			base.TimeLeft = -1;
+			TimeLeft = -1;
 		}
 
-		foreach (var client in Game.Clients)
+		foreach ( var client in Game.Clients )
 		{
-			if (client.Pawn == null)
+			if ( client.Pawn == null )
 			{
 				var pawn = new Player();
 				client.Pawn = pawn;
@@ -54,10 +53,11 @@ public class WaitPhase : BasePhase
 
 				pawn.Spawn();
 				RespawnPlayer( pawn );
-			} else
+			}
+			else
 			{
 				var pawn = (Player)client.Pawn;
-				if (pawn.LifeState == LifeState.Dead && pawn.TimeSinceDeath > 5)
+				if ( pawn.LifeState == LifeState.Dead && pawn.TimeSinceDeath > 5 )
 				{
 					RespawnPlayer( pawn );
 				}
@@ -65,7 +65,7 @@ public class WaitPhase : BasePhase
 		}
 	}
 
-	private void RespawnPlayer(Player pawn)
+	private void RespawnPlayer( Player pawn )
 	{
 		pawn.Team = Team.Spectator;
 		pawn.DressFromClient( pawn.Client );
@@ -74,6 +74,5 @@ public class WaitPhase : BasePhase
 
 	public override void HandleClientJoin( ClientJoinedEvent e )
 	{
-		
 	}
 }
